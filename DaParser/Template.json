@@ -1,0 +1,50 @@
+﻿{
+    "Nodes": [
+        {
+            "[Id]": "1",
+            "[Type]": "Dialogue",
+            "[Text]": "First entry",
+            "[DialogueOptions]": "5,6,7",
+            "[Next]": ""
+        },
+        {
+            "[Id]": "2",
+            "[Type]": "Dialogue",
+            "[Text]": "First choice choosen",
+            "[DialogueOptions]": "",
+            "[Next]": ""
+        },
+        {
+            "[Id]": "3",
+            "[Type]": "Dialogue",
+            "[Text]": "Second choice choosen",
+            "[DialogueOptions]": "",
+            "[Next]": ""
+        },
+        {
+            "[Id]": "4",
+            "[Type]": "Dialogue",
+            "[Text]": "Third choice choosen",
+            "[DialogueOption]": "",
+            "[Next]": ""
+        },
+        {
+            "[Id]": "5",
+            "[Type]": "DialogueOption",
+            "[Text]": "First Option",
+            "[Next]": "2"
+        },
+        {
+            "[Id]": "6",
+            "[Type]": "DialogueOption",
+            "[Text]": "second Option",
+            "[Next]": "3"
+        },
+        {
+            "[Id]": "7",
+            "[Type]": "DialogueOption",
+            "[Text]": "third Option",
+            "[Next]": "4"
+        }
+    ]
+}
