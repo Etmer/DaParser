@@ -11,8 +11,6 @@ namespace DaScript
         private Lexer lexer = null;
         private bool process = true;
 
-        private double result;
-
         private Dictionary<string, List<TokenType>> expectedTokens = new Dictionary<string, List<TokenType>>()
         {
             { "TERM", new List<TokenType>(){ TokenType.MINUS, TokenType.PLUS} },
@@ -24,36 +22,32 @@ namespace DaScript
             this.lexer = lexer;
         }
 
-        public void Parse() 
+        public Node Parse() 
         {
-            if (ConsumeEntryToken())
-            {
-                
-                while (process)
-                {
-                    Expression();
-                }
-                Console.WriteLine(result.ToString());
-            }
+            ConsumeEntryToken();
+            return Expression();
         }
 
-        private void Expression()
+        private Node Expression()
         {
-            ConsumeTerm();
+            Node node = ConsumeTerm();
 
             while (expectedTokens["TERM"].Contains(currentToken.Type))
             {
+                Token token = currentToken;
+
                 if (currentToken.Type == TokenType.PLUS)
                 {
                     Consume(TokenType.PLUS);
-                    result += ConsumeTerm();
                 }
                 if (currentToken.Type == TokenType.MINUS)
                 {
                     Consume(TokenType.MINUS);
-                    result -= ConsumeTerm();
                 }
+
+                node = new BinaryOpNode(token, node, ConsumeTerm());
             }
+            return node;
         }
 
         private bool Consume(params TokenType[] expectedTypes)
@@ -88,7 +82,7 @@ namespace DaScript
             return true;
         }
 
-        private double ConsumeFactor() 
+        private Node ConsumeFactor() 
         {
             Token token = currentToken;
 
@@ -96,19 +90,19 @@ namespace DaScript
             {
                 case TokenType.NUMBER:
                     Consume(TokenType.NUMBER);
-                    return token.GetValue<double>();
+                    return new NumberNode(token);
                 case TokenType.L_PAREN:
                     Consume(TokenType.L_PAREN);
-                    Expression();
+                    Node result = Expression();
                     Consume(TokenType.R_PAREN);
-                    break;
+                    return result;
             }
-            throw new System.Exception();
+            throw new System.Exception("Syntax Error");
         }
 
-        private double ConsumeTerm()
+        private Node ConsumeTerm()
         {
-            result = ConsumeFactor();
+            Node node = ConsumeFactor();
 
             Token token = currentToken;
             while (expectedTokens["FACTOR"].Contains(currentToken.Type))
@@ -117,15 +111,14 @@ namespace DaScript
                 {
                     case TokenType.MUL:
                         Consume(TokenType.MUL);
-                        result *= ConsumeFactor();
                         break;
                     case TokenType.DIV:
                         Consume(TokenType.DIV);
-                        result /= ConsumeFactor();
                         break;
                 }
+                node = new BinaryOpNode(token, node, ConsumeFactor());
             }
-            return result;
+            return node;
         }
     }
 }

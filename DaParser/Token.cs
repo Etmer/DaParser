@@ -7,7 +7,7 @@ namespace DaScript
 {
     public enum TokenType
     {
-        NAME,
+        ID, // => alphanumerical
         CONDITION, // => if
 
         EQUALS, // => =
@@ -15,13 +15,14 @@ namespace DaScript
         MINUS, // => -
         MUL, // => *
         DIV, // => /
+        SEMI, // => ;
 
         L_PAREN, // => (
         R_PAREN, // => )
 
         BOOLEAN, // => bool
         NUMBER,  // => numbers
-        STRING, // => '[...]'
+        STRING, // => '...'
 
         EOF
     }

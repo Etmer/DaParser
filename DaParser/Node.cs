@@ -4,15 +4,29 @@ using System.Text;
 
 namespace DaScript
 {
-    public class Node
+    public abstract class Node
     {
         public Token Token { get; private set; }
-        public Node Left = null;
-        public Node Right = null;
+        public Node Left { get; protected set; }
+        public Node Right { get; protected set; }
 
-        public Node(Token token) 
+        public Node(Token token)
         {
             this.Token = token;
         }
+        public T GetValue<T>() { return Token.GetValue<T>(); }
+
+    }
+    public class BinaryOpNode : Node
+    {
+        public BinaryOpNode(Token token, Node left, Node right) : base(token)
+        {
+            Left = left;
+            Right = right;
+        }
+    }
+    public class NumberNode : Node
+    {
+        public NumberNode(Token token) : base(token) { }
     }
 }

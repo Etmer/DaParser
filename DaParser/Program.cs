@@ -2,15 +2,19 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Reflection;
 
 namespace DaScript
 {
     class Program
     {
+        delegate object Function(List<object> args);
+
         static string s =
             @"
-            5 + 3 - 4 + 10 * 2
+            5 + 3 - 4 * (10 + 2)
         ";
+
 
         static void Main(string[] args)
         {
@@ -22,10 +26,12 @@ namespace DaScript
             Lexer lexer = new Lexer();
             lexer.Tokenize(input);
             Parser parser = new Parser(lexer);
-            parser.Parse();
+            Interpreter interpreter = new Interpreter(parser.Parse());
+            interpreter.Interpret();
             Console.ReadKey();
         }
     }
+
 
     public class TokenMatcher 
     {

@@ -4,9 +4,8 @@ using System.Text;
 
 namespace DaScript
 {
-    public interface IVisitable
+    public interface IVisitor
     {
-        void Accept(IVisitor visitor);
-        T GetValue<T>();
+        object Visit(Node node);
     }
 }

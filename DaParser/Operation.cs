@@ -4,8 +4,7 @@ using System.Text;
 
 namespace DaScript
 {
-    public interface IVistable
+    public class Operation
     {
-        public void Visit() { }
     }
 }
