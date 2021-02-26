@@ -12,7 +12,14 @@ namespace DaScript
 
         static string s =
             @"
-            5 + 3 - 4 * (10 + 2)
+            program
+                function
+                    MyVar = 5;
+                    if(MyVar == 10) then
+                        MySecondVar = MyVar + 4;
+                    end
+                end
+            end
         ";
 
 

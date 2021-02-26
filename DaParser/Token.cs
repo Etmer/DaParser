@@ -8,9 +8,18 @@ namespace DaScript
     public enum TokenType
     {
         ID, // => alphanumerical
-        CONDITION, // => if
 
-        EQUALS, // => =
+        //Keywords
+        CONDITION, // => if
+        THEN, // => then
+        ELSE, // => else
+        FUNC, // => functions
+        PROGRAM, // => Program start
+        EMPTY, // => emtpy node
+        END, // => Program end
+
+        ASSIGN, // => =
+        EQUALS, // => ==
         PLUS, // => +
         MINUS, // => -
         MUL, // => *
