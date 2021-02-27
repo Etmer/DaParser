@@ -13,6 +13,7 @@ namespace DaScript
         CONDITION, // => if
         THEN, // => then
         ELSE, // => else
+        ELSEIF, // => elif
         FUNC, // => functions
         PROGRAM, // => Program start
         EMPTY, // => emtpy node

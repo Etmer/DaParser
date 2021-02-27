@@ -24,6 +24,7 @@ namespace DaScript
             { new TokenMatcher(TokenType.STRING, @"\'(.?)*\'")},
             { new TokenMatcher(TokenType.EOF, @"(\0)")},
             { new TokenMatcher(TokenType.THEN,@"\b(then)\b")},
+            { new TokenMatcher(TokenType.ELSEIF,@"\b(elif)\b")},
             { new TokenMatcher(TokenType.ELSE,@"\b(else)\b")},
             { new TokenMatcher(TokenType.ID, @"\b((?i)[a-aZ-z_][a-aZ-z0-9_]*)\b")},
             { new TokenMatcher(TokenType.L_PAREN, @"(\()")},

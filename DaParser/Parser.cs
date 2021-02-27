@@ -121,40 +121,35 @@ namespace DaScript
         private Node Consume_Program()
         {
             Consume(TokenType.PROGRAM);
-            Node result = Consume_CompoundStatement();
+            Node result = Consume_Function();
             Consume(TokenType.END);
             return result;
+        }
+
+        private Node Consume_Function() 
+        {
+            Token token = currentToken;
+
+            Consume(TokenType.FUNC);
+            List<Node> nodes = Consume_StatementList();
+            FunctionNode function = new FunctionNode(token);
+
+            foreach (Node node in nodes)
+                function.Append(node);
+
+            Consume(TokenType.END);
+            return function;
         }
 
         private Node Consume_CompoundStatement()
         {
             Token token = currentToken;
 
-            List<Node> nodes = null;
-            CompundStatementNode compund = null;
-
-            switch (token.Type) 
-            {
-                case TokenType.FUNC:
-                case TokenType.ELSE:
-                    Consume(TokenType.FUNC, TokenType.ELSE); 
-                    
-                    nodes = Consume_StatementList();
-                    compund = new CompundStatementNode(token);
-
-                    Consume(TokenType.END);
-                    break;
-                case TokenType.THEN:
-                    Consume(TokenType.THEN);
-                    nodes = Consume_StatementList();
-                    compund = new CompundStatementNode(token);
-                    break;
-            }
+            List<Node> nodes = Consume_StatementList();
+            CompundStatementNode compund = new CompundStatementNode(token);
 
             foreach (Node node in nodes)
                 compund.Append(node);
-
-
 
             return compund;
         }
@@ -164,14 +159,26 @@ namespace DaScript
             Node node = Consume_Statement();
             List<Node> nodes = new List<Node>() { node };
 
-            while (currentToken.Type == TokenType.SEMI)
+            bool procede = currentToken.Type == TokenType.SEMI;
+
+            while (procede)
             {
-                Consume(TokenType.SEMI);
-                if (currentToken.Type != TokenType.END && currentToken.Type != TokenType.ELSE)
-                    nodes.Add(Consume_Statement());
+                Consume(TokenType.SEMI, TokenType.END);
+                switch (currentToken.Type) 
+                {
+                    case TokenType.END:
+                    case TokenType.ELSE:
+                    case TokenType.ELSEIF:
+                        procede = false;
+                        break;
+                    default: 
+                        nodes.Add(Consume_Statement());
+                        break;
+                } 
             }
             return nodes;
         }
+
         private Node Consume_Statement()
         {
             Token token = currentToken;
@@ -182,7 +189,6 @@ namespace DaScript
                 case TokenType.ID:
                     return Consume_AssignStatement();
                 case TokenType.CONDITION:
-                case TokenType.ELSE:
                     return Consume_Condition();
                 case TokenType.END:
                     return new EndNode(token);
@@ -193,26 +199,37 @@ namespace DaScript
         private Node Consume_Condition()
         {
             Token token = currentToken;
-            switch (token.Type) 
+            switch (token.Type)
             {
                 case TokenType.CONDITION:
                     Consume(TokenType.CONDITION);
-                    Node value = Consume_Expression();
-                    return new ConditionNode(token, ConsumeConditionBody(), ConsumeConditionBody(), value);
-                case TokenType.ELSE:
-                    return new ElseNode(token,ConsumeConditionBody());
+                    break;
+                case TokenType.ELSEIF:
+                    Consume(TokenType.ELSEIF);
+                    break;
             }
-            throw new System.Exception();
+            Node value = Consume_Expression();
+
+            Node left = Consume_ConditionBody();
+            Node right = Consume_ConditionBody();
+            return new ConditionNode(token, left, right, value);
         }
 
-        private Node ConsumeConditionBody() 
+        private Node Consume_ConditionBody() 
         {
             Token token = currentToken;
             switch (token.Type) 
             {
                 case TokenType.THEN:
-                case TokenType.ELSE:
+                    Consume(TokenType.THEN);
                     return Consume_CompoundStatement();
+                case TokenType.ELSEIF:
+                    return Consume_Condition();
+                case TokenType.ELSE:
+                    Consume(TokenType.ELSE);
+                    Node node = new ElseNode(token,Consume_CompoundStatement());
+                    Consume(TokenType.END);
+                    return node;
                 case TokenType.END:
                     Consume(TokenType.END);
                     return new EmptyNode(token);

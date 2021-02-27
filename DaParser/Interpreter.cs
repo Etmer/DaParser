@@ -111,22 +111,23 @@ namespace DaScript
         }
         private object Handle_ConditionNode(Node node)
         {
-            Token rhs = node.children[2].Token;
+            Token token = node.Token;
 
-            bool value = (bool)Handle_BinOpNode(node.children[0]);
+            switch (token.Type) 
+            {
+                case TokenType.CONDITION:
+                case TokenType.ELSEIF:
+                    bool value = (bool)Handle_BinOpNode(node.children[0]);
 
-            if (value)
-                return Handle_CompoundNode(node.children[1]);
-            else
-                switch (rhs.Type) 
-                {
-                    case TokenType.END:
-                        return 0;
-                    case TokenType.ELSE:
-                        return Handle_CompoundNode(node.children[2]);
-                }
-
-            throw new System.Exception();
+                    if (value)
+                        return Handle_CompoundNode(node.children[1]);
+                    else
+                        return Handle_ConditionNode(node.children[2]);
+                case TokenType.ELSE:
+                    return Handle_CompoundNode(node.children[0]);
+                default:
+                    throw new System.Exception();
+            }
         }
     }
 }

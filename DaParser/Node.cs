@@ -39,7 +39,7 @@ namespace DaScript
     }
     public class ConditionNode : Node
     {
-        public ConditionNode(Token token, Node left, Node right, Node value) : base(token) 
+        public ConditionNode(Token token, Node left, Node right, Node value) : base(token)
         {
             children.Add(value);
             children.Add(left);
@@ -63,10 +63,14 @@ namespace DaScript
         public List<Node> statementList { get; } = new List<Node>();
         public CompundStatementNode(Token token) : base(token) { }
 
-        public void Append(Node node) 
+        public void Append(Node node)
         {
             statementList.Add(node);
         }
+    }
+    public class FunctionNode : CompundStatementNode
+    {
+        public FunctionNode(Token token) : base(token) {  }
     }
     public class EmptyNode : Node
     {
