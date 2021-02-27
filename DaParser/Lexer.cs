@@ -12,6 +12,7 @@ namespace DaScript
         {
             { new TokenMatcher(TokenType.CONDITION, @"\b(if)\b")},
             { new TokenMatcher(TokenType.FUNC, @"\b(function)\b")},
+            { new TokenMatcher(TokenType.EOF, @"(\!)")},
             { new TokenMatcher(TokenType.END, @"\b(end)\b")},
             { new TokenMatcher(TokenType.PROGRAM, @"\b(program)\b")},
             { new TokenMatcher(TokenType.EQUALS, @"(\==)")},
@@ -114,6 +115,12 @@ namespace DaScript
                         Do(current.ToString());
                         GetNextChar(ref current, input);
                         sBuilder.Clear();
+                        break;
+                    case '!':
+                        Do(sBuilder.ToString());
+                        Do(current.ToString());
+                        sBuilder.Clear();
+                        GetNextChar(ref current, input);
                         break;
                     default:
                         sBuilder.Append(input[index]);

@@ -48,21 +48,28 @@ namespace DaScript
             return node;
         }
 
-        private bool Consume(params TokenType[] expectedTypes)
+        private void Consume(params TokenType[] expectedTypes)
         {
+            Token token = currentToken;
+
             foreach (TokenType type in expectedTypes)
             {
-                if (currentToken.Type == type)
+                if (token.Type == type)
                 {
-                    if (lexer.HasToken())
+                    if (currentToken.Type != TokenType.EOF)
                     {
                         currentToken = lexer.GetNextToken();
-                        return true;
+                        return;
                     }
-                        return false;
+                    else
+                    {
+                        Console.WriteLine("Program terminated successfully.");
+                        return;
+                    }
+
                 }
             }
-            throw new System.Exception("Syntax Error");
+            throw new System.Exception();
         }
 
         private bool ConsumeEntryToken() 
@@ -123,6 +130,7 @@ namespace DaScript
             Consume(TokenType.PROGRAM);
             Node result = Consume_Function();
             Consume(TokenType.END);
+            Consume(TokenType.EOF);
             return result;
         }
 
@@ -190,8 +198,6 @@ namespace DaScript
                     return Consume_AssignStatement();
                 case TokenType.CONDITION:
                     return Consume_Condition();
-                case TokenType.END:
-                    return new EndNode(token);
             }
             throw new System.Exception();
         }
@@ -228,11 +234,7 @@ namespace DaScript
                 case TokenType.ELSE:
                     Consume(TokenType.ELSE);
                     Node node = new ElseNode(token,Consume_CompoundStatement());
-                    Consume(TokenType.END);
                     return node;
-                case TokenType.END:
-                    Consume(TokenType.END);
-                    return new EmptyNode(token);
             }
             throw new System.Exception();
         }

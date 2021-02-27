@@ -25,7 +25,7 @@ namespace DaScript
                         MySecondVar = 6;      
                     end
                 end
-            end
+            end!
         ";
 
 
