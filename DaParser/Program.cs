@@ -15,8 +15,10 @@ namespace DaScript
             program
                 function
                     MyVar = 5;
-                    if(MyVar == 10) then
+                    if(MyVar == 9) then
                         MySecondVar = MyVar + 4;
+                    else
+                        MySecondVar = MyVar + 6;
                     end
                 end
             end

@@ -20,7 +20,7 @@ namespace DaScript
             children.Add(left);
             children.Add(right);
         }
-        public virtual T GetValue<T>() { return Token.GetValue<T>(); }
+        public virtual object GetValue() { return Token.GetValue(); }
     }
     public class BinaryOpNode : Node
     {
@@ -44,6 +44,13 @@ namespace DaScript
             children.Add(value);
             children.Add(left);
             children.Add(right);
+        }
+    }
+    public class ElseNode : Node
+    {
+        public ElseNode(Token token, Node body) : base(token)
+        {
+            children.Add(body);
         }
     }
     public class VariableNode : Node

@@ -67,9 +67,9 @@ namespace DaScript
             Value = value;
         }
 
-        public T GetValue<T>() 
+        public object GetValue() 
         {
-            return (T)Value;
+            return Value;
         }
     }
 }

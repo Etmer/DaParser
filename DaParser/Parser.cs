@@ -7,14 +7,12 @@ namespace DaScript
     class Parser
     {
         private Token currentToken;
-        private Token lastToken;
         private Lexer lexer = null;
-        private bool process = true;
 
         private Dictionary<string, List<TokenType>> expectedTokens = new Dictionary<string, List<TokenType>>()
         {
             { "TERM", new List<TokenType>(){ TokenType.MINUS, TokenType.PLUS} },
-            { "FACTOR", new List<TokenType>(){ TokenType.MUL, TokenType.DIV} },
+            { "FACTOR", new List<TokenType>(){ TokenType.MUL, TokenType.DIV, TokenType.EQUALS} },
         };
 
         public Parser(Lexer lexer) 
@@ -58,15 +56,10 @@ namespace DaScript
                 {
                     if (lexer.HasToken())
                     {
-                        lastToken = currentToken;
                         currentToken = lexer.GetNextToken();
                         return true;
                     }
-                    else
-                    {
-                        process = false;
                         return false;
-                    }
                 }
             }
             throw new System.Exception("Syntax Error");
@@ -76,7 +69,6 @@ namespace DaScript
         {
             Token token = lexer.GetNextToken();
             currentToken = token;
-            lastToken = token;
 
             return true;
         }
@@ -117,6 +109,9 @@ namespace DaScript
                     case TokenType.DIV:
                         Consume(TokenType.DIV);
                         break;
+                    case TokenType.EQUALS:
+                        Consume(TokenType.EQUALS);
+                        break;
                 }
                 node = new BinaryOpNode(token, node, Consume_Factor());
             }
@@ -135,24 +130,33 @@ namespace DaScript
         {
             Token token = currentToken;
 
-            switch (token.Type)
+            List<Node> nodes = null;
+            CompundStatementNode compund = null;
+
+            switch (token.Type) 
             {
                 case TokenType.FUNC:
-                case TokenType.THEN:
                 case TokenType.ELSE:
-                    Consume(TokenType.FUNC, TokenType.THEN, TokenType.ELSE);
-                    List<Node> nodes = Consume_StatementList();
-                    CompundStatementNode compund = new CompundStatementNode(token);
-
-                    foreach (Node node in nodes)
-                        compund.Append(node);
+                    Consume(TokenType.FUNC, TokenType.ELSE); 
+                    
+                    nodes = Consume_StatementList();
+                    compund = new CompundStatementNode(token);
 
                     Consume(TokenType.END);
-                    return compund;
-                case TokenType.END:
-                    return new EmptyNode(token);
+                    break;
+                case TokenType.THEN:
+                    Consume(TokenType.THEN);
+                    nodes = Consume_StatementList();
+                    compund = new CompundStatementNode(token);
+                    break;
             }
-            throw new System.Exception();
+
+            foreach (Node node in nodes)
+                compund.Append(node);
+
+
+
+            return compund;
         }
 
         private List<Node> Consume_StatementList()
@@ -163,12 +167,10 @@ namespace DaScript
             while (currentToken.Type == TokenType.SEMI)
             {
                 Consume(TokenType.SEMI);
-                if(currentToken.Type != TokenType.END)
+                if (currentToken.Type != TokenType.END && currentToken.Type != TokenType.ELSE)
                     nodes.Add(Consume_Statement());
             }
-
             return nodes;
-
         }
         private Node Consume_Statement()
         {
@@ -180,24 +182,42 @@ namespace DaScript
                 case TokenType.ID:
                     return Consume_AssignStatement();
                 case TokenType.CONDITION:
-                    return Consume_IfStatement();
+                case TokenType.ELSE:
+                    return Consume_Condition();
                 case TokenType.END:
                     return new EndNode(token);
             }
             throw new System.Exception();
         }
 
-        private Node Consume_IfStatement()
+        private Node Consume_Condition()
         {
             Token token = currentToken;
-            Consume(TokenType.CONDITION);
-            Consume(TokenType.L_PAREN);
-            Node value = Consume_Statement();
-            Consume(TokenType.R_PAREN);
-            Node left = Consume_CompoundStatement(); 
-            Node right = Consume_CompoundStatement();
+            switch (token.Type) 
+            {
+                case TokenType.CONDITION:
+                    Consume(TokenType.CONDITION);
+                    Node value = Consume_Expression();
+                    return new ConditionNode(token, ConsumeConditionBody(), ConsumeConditionBody(), value);
+                case TokenType.ELSE:
+                    return new ElseNode(token,ConsumeConditionBody());
+            }
+            throw new System.Exception();
+        }
 
-            return new ConditionNode(token, left, right, value);
+        private Node ConsumeConditionBody() 
+        {
+            Token token = currentToken;
+            switch (token.Type) 
+            {
+                case TokenType.THEN:
+                case TokenType.ELSE:
+                    return Consume_CompoundStatement();
+                case TokenType.END:
+                    Consume(TokenType.END);
+                    return new EmptyNode(token);
+            }
+            throw new System.Exception();
         }
 
         private Node Consume_Variable()
@@ -212,18 +232,10 @@ namespace DaScript
         {
             Node left = Consume_Variable();
             Token token = currentToken;
-            switch (token.Type)
-            {
-                case TokenType.ASSIGN:
-                    Consume(TokenType.ASSIGN); 
-                    Node assign_right = Consume_Expression();
-                    return new AssignmentNode(token, left, assign_right);
-                case TokenType.EQUALS:
-                    Consume(TokenType.EQUALS);
-                    Node equal_right  = Consume_Expression();
-                    return new BinaryOpNode(token, left, equal_right);
-            }
-            throw new Exception();
+
+            Consume(TokenType.ASSIGN); 
+            Node assign_right = Consume_Expression();
+            return new AssignmentNode(token, left, assign_right);
         }
     }
 }

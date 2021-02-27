@@ -64,7 +64,7 @@ namespace DaScript
         }
         private object Handle_VariableNode(Node node) 
         {
-            string name = node.GetValue<string>();
+            string name = (string)node.GetValue();
 
             if (Globals.ContainsKey(name))
                 return Globals[name];
@@ -73,7 +73,7 @@ namespace DaScript
         }
         private object Handle_AssignNode(Node node)
         {
-            string name = node.children[0].GetValue<string>();
+            string name = (string)node.children[0].GetValue();
 
             if (Globals.ContainsKey(name))
                 Globals.Add(name, Visit(node.children[1]));
@@ -107,7 +107,7 @@ namespace DaScript
 
         private object Handle_NumberNode(Node node) 
         {
-            return node.GetValue<double>();
+            return (double)node.GetValue();
         }
         private object Handle_ConditionNode(Node node)
         {
@@ -123,7 +123,7 @@ namespace DaScript
                     case TokenType.END:
                         return 0;
                     case TokenType.ELSE:
-                        return Handle_CompoundNode(node.children[0]);
+                        return Handle_CompoundNode(node.children[2]);
                 }
 
             throw new System.Exception();
