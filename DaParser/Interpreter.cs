@@ -121,10 +121,12 @@ namespace DaScript
 
                     if (value)
                         return Handle_CompoundNode(node.children[1]);
-                    else
+                    else 
                         return Handle_ConditionNode(node.children[2]);
                 case TokenType.ELSE:
                     return Handle_CompoundNode(node.children[0]);
+                case TokenType.END:
+                    return 1;
                 default:
                     throw new System.Exception();
             }

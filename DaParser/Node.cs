@@ -39,18 +39,11 @@ namespace DaScript
     }
     public class ConditionNode : Node
     {
-        public ConditionNode(Token token, Node left, Node right, Node value) : base(token)
+        public ConditionNode(Token token, Node value, Node left, Node right) : base(token)
         {
             children.Add(value);
             children.Add(left);
             children.Add(right);
-        }
-    }
-    public class ElseNode : Node
-    {
-        public ElseNode(Token token, Node body) : base(token)
-        {
-            children.Add(body);
         }
     }
     public class VariableNode : Node
