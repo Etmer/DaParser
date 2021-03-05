@@ -86,6 +86,11 @@ namespace DaScript
 
             switch (token.Type)
             {
+                case TokenType.PLUS:
+                case TokenType.MINUS:
+                    Consume(TokenType.MINUS, TokenType.PLUS);
+                    Node value = Consume_Expression();
+                    return new UnaryNode(token, value);
                 case TokenType.NUMBER:
                     Consume(TokenType.NUMBER);
                     return new NumberNode(token);
@@ -205,6 +210,7 @@ namespace DaScript
             }
             throw new System.Exception();
         }
+
         private Node Consume_Then() 
         {
             Token token = currentToken;

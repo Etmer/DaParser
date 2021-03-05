@@ -6,5 +6,6 @@ namespace DaScript
 {
     class Table
     {
+        private Dictionary<string, TableValue> globals = new Dictionary<string, TableValue>();
     }
 }

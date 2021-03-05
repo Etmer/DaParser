@@ -63,7 +63,7 @@ namespace DaScript
     }
     public class FunctionNode : CompundStatementNode
     {
-        public FunctionNode(Token token) : base(token) {  }
+        public FunctionNode(Token token) : base(token) { }
     }
     public class EmptyNode : Node
     {
@@ -74,6 +74,15 @@ namespace DaScript
         public EndNode(Token token) : base(token)
         {
 
+        }
+    }
+    public class UnaryNode : Node
+    {
+        public TokenType op { get; private set; }
+        public UnaryNode(Token token, Node value) : base(token)
+        {
+            op = token.Type;
+            children.Add(value);
         }
     }
 }

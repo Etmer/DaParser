@@ -28,6 +28,8 @@ namespace DaScript
             {
                 case TokenType.MINUS:
                 case TokenType.PLUS:
+                    result = Handle_UnaryNode(node);
+                    break;
                 case TokenType.MUL:
                 case TokenType.DIV:
                     result = Handle_BinOpNode(node);
@@ -108,6 +110,18 @@ namespace DaScript
         private object Handle_NumberNode(Node node) 
         {
             return (double)node.GetValue();
+        }
+        private object Handle_UnaryNode(Node node)
+        {
+            Token token = node.Token;
+            switch (token.Type) 
+            {
+                case TokenType.PLUS:
+                    return +(double)node.children[0].GetValue();
+                case TokenType.MINUS:
+                    return -(double)node.children[0].GetValue();
+            }
+            throw new System.Exception();
         }
         private object Handle_ConditionNode(Node node)
         {
