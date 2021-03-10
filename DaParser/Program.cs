@@ -14,6 +14,7 @@ namespace DaScript
             @"
             program
                 function
+                    stringythingy = 'Hi';
                     MyVar = 5;
                     if(MyVar == 6) then
                         MySecondVar = -4;      

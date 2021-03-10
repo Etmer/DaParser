@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 
 namespace DaScript
 {
+    public delegate object Function(params object[] arguments); 
     public enum Category
     {
         Variable,
@@ -33,5 +37,31 @@ namespace DaScript
 
     class FunctionValue : TableValue
     {
+        private Delegate functionCall;
+        private object functionOwner;
+        private List<object> parameters = new List<object>();
+        public void Call()
+        {
+            functionCall.DynamicInvoke(parameters.ToArray());
+        }
+
+        public void CreateFromDelegate(Delegate d)
+        {
+            MethodInfo method = d.Method;
+            parameters.Add(d.Target);
+
+            ParameterExpression instance = Expression.Parameter(method.DeclaringType, "Instance");
+            ParameterExpression[] parameter = method.GetParameters()
+                .Select(p => Expression.Parameter(p.ParameterType, p.Name))
+                .ToArray();
+            List<ParameterExpression> allParameters = new List<ParameterExpression>() { instance };
+            allParameters.AddRange(parameter);
+
+            LambdaExpression lambda = Expression.Lambda(
+                Expression.Call(instance, method, parameter),
+                allParameters.ToArray());
+
+            functionCall = lambda.Compile();
+        }
     }
 }

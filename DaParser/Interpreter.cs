@@ -16,8 +16,7 @@ namespace DaScript
 
         public void Interpret() 
         {
-            object value = Visit(tree);
-            int i = 0;
+            Visit(tree);
         }
 
         public object Visit(Node node)
@@ -49,7 +48,9 @@ namespace DaScript
                 case TokenType.CONDITION:
                     result = Handle_ConditionNode(node);
                     break;
-
+                case TokenType.STRING:
+                    result = Handle_StringNode(node);
+                    break;
             }
             return result;
         }
@@ -110,6 +111,11 @@ namespace DaScript
         private object Handle_NumberNode(Node node) 
         {
             return (double)node.GetValue();
+        }
+
+        private object Handle_StringNode(Node node)
+        {
+            return (string)node.GetValue();
         }
         private object Handle_UnaryNode(Node node)
         {

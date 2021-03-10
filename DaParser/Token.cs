@@ -29,6 +29,8 @@ namespace DaScript
 
         L_PAREN, // => (
         R_PAREN, // => )
+        L_BLOCK, // => [
+        R_BLOCK, // => ]
 
         BOOLEAN, // => bool
         NUMBER,  // => numbers
@@ -59,8 +61,7 @@ namespace DaScript
                     value = Convert.ToBoolean(value);
                     break;
                 case TokenType.STRING:
-                    string s = Convert.ToString(value);
-                    value = Regex.Match(s, @"(\')(.?*)(\')").Value;
+                    value = Convert.ToString(value);
                     break;
             }
 

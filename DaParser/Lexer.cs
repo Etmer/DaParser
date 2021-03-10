@@ -6,6 +6,8 @@ namespace DaScript
 {
     class Lexer
     {
+        private string input;
+        private char? current;
         private int index = 0;
         private List<Token> tokens = new List<Token>();
         private List<TokenMatcher> tokenMatchers = new List<TokenMatcher>()
@@ -13,6 +15,10 @@ namespace DaScript
             { new TokenMatcher(TokenType.CONDITION, @"\b(if)\b")},
             { new TokenMatcher(TokenType.FUNC, @"\b(function)\b")},
             { new TokenMatcher(TokenType.EOF, @"(\!)")},
+
+            { new TokenMatcher(TokenType.L_BLOCK, @"(\[)")},
+            { new TokenMatcher(TokenType.R_BLOCK, @"(\])")},
+
             { new TokenMatcher(TokenType.END, @"\b(end)\b")},
             { new TokenMatcher(TokenType.PROGRAM, @"\b(program)\b")},
             { new TokenMatcher(TokenType.EQUALS, @"(\==)")},
@@ -22,7 +28,7 @@ namespace DaScript
             { new TokenMatcher(TokenType.MINUS, @"(\-)")},
             { new TokenMatcher(TokenType.MUL, @"(\*)")},
             { new TokenMatcher(TokenType.DIV, @"(\/)")},
-            { new TokenMatcher(TokenType.STRING, @"\'(.?)*\'")},
+            { new TokenMatcher(TokenType.STRING, @"(?<=\')(.?)*(?=\')")},
             { new TokenMatcher(TokenType.EOF, @"(\0)")},
             { new TokenMatcher(TokenType.THEN,@"\b(then)\b")},
             { new TokenMatcher(TokenType.ELSEIF,@"\b(elif)\b")},
@@ -40,59 +46,39 @@ namespace DaScript
 
         public void Tokenize(string input)
         {
+            this.input = input;
+            current = GetNextChar();
+
             StringBuilder sBuilder = new StringBuilder();
 
-            while(index < input.Length)
+            while(current != null)
             {
-                char current = input[index];
                 switch (current)
                 {
                     case '\r':
                     case '\n':
-                        Do(sBuilder.ToString());
-                        sBuilder.Clear();
-
-                        GetNextChar(ref current, input);
+                        CreateTokenFromStringBuilder(sBuilder);
                         break;
                     case ' ':
-                        if (sBuilder.Length > 0)
-                        {
-                            Do(sBuilder.ToString());
-                            sBuilder.Clear();
-                        }
-
-                        GetNextChar(ref current, input);
+                        CreateTokenFromStringBuilder(sBuilder);
                         break;
                     case '(':
                     case ')':
-                        Do(sBuilder.ToString());
-                        Do(current.ToString());
-                        sBuilder.Clear();
+                        CreateTokenFromStringBuilder(sBuilder);
+                        CreateTokenFromChar(current.Value);
+                        break;
 
-                        GetNextChar(ref current, input);
+                    case '[':
+                    case ']':
+                        CreateTokenFromChar(current.Value);
                         break;
                     case '\'':
-                        sBuilder.Append(current);
-                        GetNextChar(ref current, input);
-
-                        while (current!= '\'')
-                        {
-                            sBuilder.Append(input[index]);
-                            GetNextChar(ref current, input);
-                        }
-                        sBuilder.Append(current);
-                        Do(sBuilder.ToString());
-                        sBuilder.Clear();
-                        GetNextChar(ref current, input);
+                        HandleString(input, sBuilder);
                         break;
                     case '=':
                     case '-':
                     case '+':
-                        if (sBuilder.Length > 0)
-                        {
-                            Do(sBuilder.ToString());
-                            sBuilder.Clear();
-                        }
+                        CreateTokenFromStringBuilder(sBuilder);
                         char next = ' ';
                         if (PeekNextChar(ref next, input))
                         {
@@ -102,31 +88,28 @@ namespace DaScript
                                 sBuilder.Append(next);
                                 Do(sBuilder.ToString());
                                 sBuilder.Clear();
-                                GetNextChar(ref current, input);
-                                GetNextChar(ref current, input);
+                                current = GetNextChar();
+                                current = GetNextChar();
                                 break;
                             }
                         }
                         Do(current.ToString());
-                        GetNextChar(ref current, input);
                         break;
                     case ';':
                         Do(sBuilder.ToString());
                         Do(current.ToString());
-                        GetNextChar(ref current, input);
                         sBuilder.Clear();
                         break;
                     case '!':
-                        Do(sBuilder.ToString());
-                        Do(current.ToString());
-                        sBuilder.Clear();
-                        GetNextChar(ref current, input);
+                        CreateTokenFromStringBuilder(sBuilder);
+                        CreateTokenFromChar(current.Value);
                         break;
                     default:
-                        sBuilder.Append(input[index]);
-                        index++;
+                        sBuilder.Append(current);
                         break;
                 }
+
+                current = GetNextChar();
             }
             index = 0;
         }
@@ -149,16 +132,16 @@ namespace DaScript
             }
         }
 
-        private bool GetNextChar(ref char current, string input)
+        private char? GetNextChar()
         {
             index++;
             if (index < input.Length)
             {
-                current = input[index];
-                return true;
+                return input[index];
             }
-            return false;
+            return null;
         }
+
         private bool PeekNextChar(ref char next, string input)
         {
             int idx = index + 1;
@@ -168,6 +151,37 @@ namespace DaScript
                 return true;
             }
             return false;
+        }
+
+        private void CreateTokenFromStringBuilder(StringBuilder stringBuilder) 
+        {
+            if (stringBuilder.Length != 0)
+            {
+                Do(stringBuilder.ToString());
+                stringBuilder.Clear();
+            }
+        }
+
+        private void CreateTokenFromChar(char character)
+        {
+            Do(character.ToString());
+        }
+
+        private void HandleString(string input, StringBuilder sBuilder) 
+        {
+            CreateTokenFromStringBuilder(sBuilder);
+
+            sBuilder.Append(current);
+            current = GetNextChar().Value;
+
+            while (current != '\'')
+            {
+                sBuilder.Append(input[index]);
+                current = GetNextChar().Value;
+            }
+            sBuilder.Append(current);
+
+            CreateTokenFromStringBuilder(sBuilder);
         }
     }
 }

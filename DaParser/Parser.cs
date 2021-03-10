@@ -102,6 +102,10 @@ namespace DaScript
                 case TokenType.ID:
                     Node var = Consume_Variable();
                     return var;
+                case TokenType.STRING:
+                    Consume(TokenType.STRING);
+                    Node stringValue = new StringNode(token);
+                    return stringValue;
             }
             throw new System.Exception();
         }

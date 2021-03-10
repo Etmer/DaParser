@@ -32,6 +32,11 @@ namespace DaScript
         public NumberNode(Token token) : base(token) { }
 
     }
+    public class StringNode : Node
+    {
+        public StringNode(Token token) : base(token) { }
+
+    }
     public class AssignmentNode : Node
     {
         public AssignmentNode(Token token, Node left, Node right) : base(token, left, right) { }
