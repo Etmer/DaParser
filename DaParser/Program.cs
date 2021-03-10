@@ -39,6 +39,7 @@ namespace DaScript
             Interpreter interpreter = new Interpreter(parser.Parse());
             interpreter.Interpret();
             Console.ReadKey();
+
         }
     }
 
