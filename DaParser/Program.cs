@@ -13,6 +13,7 @@ namespace DaScript
         static string s =
             @"
             program
+            [MyName]
                 function
                     stringythingy = 'Hi';
                     MyVar = 5;
