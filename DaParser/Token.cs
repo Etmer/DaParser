@@ -26,6 +26,7 @@ namespace DaScript
         MUL, // => *
         DIV, // => /
         SEMI, // => ;
+        COMMA, // => ,
 
         L_PAREN, // => (
         R_PAREN, // => )

@@ -17,35 +17,52 @@ namespace DaScript
         Function,
     }
 
-    class TableValue
+    public class TableSymbol
     {
         public string Name { get; private set; }
         public Type Type { get; private set; }
-        public Category Cat { get; private set; }
-        public object Value { get; private set; }
+        public virtual Category Cat { get; private set; }
+        public virtual object Value { get; private set; }
+        public TableSymbol(object value) { Value = value; }
     }
 
-    class Variable : TableValue
+    public class Variable : TableSymbol
     {
-
+        public Variable(object value) : base(value) { }
     }
 
-    class BuiltInType : TableValue
+    public class StringSymbol : BuiltInType 
     {
+        public override Category Cat { get { return Category.String; } }
 
+        public StringSymbol(object value) : base(value) { }
+    }
+    public class IntegerSymbol : BuiltInType
+    {
+        public override Category Cat { get { return Category.Number; } }
+        public IntegerSymbol(object value) : base(value) { }
     }
 
-    class FunctionValue : TableValue
+    public class BuiltInType : TableSymbol
+    {
+        public BuiltInType(object value) : base(value) { }
+    }
+
+    public class FunctionSymbol : TableSymbol
     {
         private Delegate functionCall;
         private object functionOwner;
         private List<object> parameters = new List<object>();
+        public FunctionSymbol(object value) : base(value)
+        {
+            CreateFromDelegate((Delegate)value);
+        }
         public void Call()
         {
             functionCall.DynamicInvoke(parameters.ToArray());
         }
 
-        public void CreateFromDelegate(Delegate d)
+        private void CreateFromDelegate(Delegate d)
         {
             MethodInfo method = d.Method;
             parameters.Add(d.Target);
@@ -63,5 +80,11 @@ namespace DaScript
 
             functionCall = lambda.Compile();
         }
+    }
+
+    public class EventSymbol : TableSymbol
+    {
+        public BlockNode Block { get { return Value as BlockNode; } }
+        public EventSymbol(BlockNode value) : base(value) { }
     }
 }

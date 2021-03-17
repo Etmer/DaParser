@@ -13,17 +13,16 @@ namespace DaScript
         static string s =
             @"
             program
-            [MyName]
-                function
-                    stringythingy = 'Hi';
-                    MyVar = 5;
-                    if(MyVar == 6) then
-                        MySecondVar = -4;      
-                    elif(MyVar == 5) then
-                        MySecondVar = -10;     
-                    end
+
+                [MyName]
+                  CallMeMaybe();
                 end
-            end!
+
+                [MyNextName]
+                    AnotherVar = 'hello';
+                end
+
+            !
         ";
 
 
@@ -37,9 +36,10 @@ namespace DaScript
             Lexer lexer = new Lexer();
             lexer.Tokenize(input);
             Parser parser = new Parser(lexer);
-            Interpreter interpreter = new Interpreter(parser.Parse());
+            EventInterpreter interpreter = new EventInterpreter(parser.Parse());
             interpreter.Interpret();
-            Console.ReadKey();
+            string nextInput = Console.ReadLine();
+            interpreter.VisitBlock(nextInput);
 
         }
     }

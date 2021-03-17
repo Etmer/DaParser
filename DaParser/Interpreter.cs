@@ -6,7 +6,7 @@ namespace DaScript
 {
     public class Interpreter : IVisitor
     {
-        public Dictionary<string, object> Globals = new Dictionary<string, object>();
+        protected Table Globals = new Table();
         private Node tree = null;
        
         public Interpreter(Node tree) 
@@ -25,6 +25,9 @@ namespace DaScript
 
             switch (node.Token.Type)
             {
+                case TokenType.PROGRAM:
+                    result = Handle_MainNode(node);
+                    break;
                 case TokenType.MINUS:
                 case TokenType.PLUS:
                     result = Handle_UnaryNode(node);
@@ -37,6 +40,7 @@ namespace DaScript
                     result = Handle_NumberNode(node);
                     break;
                 case TokenType.FUNC:
+                case TokenType.L_BLOCK:
                     result = Handle_CompoundNode(node);
                     break;
                 case TokenType.ID:
@@ -65,8 +69,12 @@ namespace DaScript
             }
             return 1;
         }
+
         private object Handle_VariableNode(Node node) 
         {
+            if (node is FunctionCallNode)
+                return Handle_FunctionCallNode(node);
+
             string name = (string)node.GetValue();
 
             if (Globals.ContainsKey(name))
@@ -74,17 +82,48 @@ namespace DaScript
 
             throw new System.Exception();
         }
+        private object Handle_FunctionCallNode(Node node)
+        {
+            FunctionCallNode funcCall = node as FunctionCallNode;
+            string name = funcCall.Callee.GetValue() as string;
+
+            if (Globals.ContainsKey(name))
+                ((FunctionSymbol)Globals[name]).Call();
+
+            return 0;
+        }
+
+        public void EnterBlockNode(string name)
+        {
+            if (Globals.ContainsKey(name))
+            {
+                EventSymbol symbol = Globals[name] as EventSymbol;
+                Visit(symbol.Block);
+            }
+        }
+
+        private object Handle_MainNode(Node node)
+        {
+            CompundStatementNode program = node as CompundStatementNode;
+            foreach (BlockNode block in program.statementList) 
+            {
+                Globals.Add(block.GetValue() as string, new EventSymbol(block));
+            }
+            return program.statementList[0];
+        }
+
         private object Handle_AssignNode(Node node)
         {
             string name = (string)node.children[0].GetValue();
 
             if (Globals.ContainsKey(name))
-                Globals.Add(name, Visit(node.children[1]));
+                Globals.Add(name, new Variable(Visit(node.children[1])));
             else
                 Globals[name] = Visit(node.children[1]);
 
             return 1;
         }
+
         private object Handle_BinOpNode(Node node)
         {
             Token token = node.Token;
@@ -117,6 +156,7 @@ namespace DaScript
         {
             return (string)node.GetValue();
         }
+
         private object Handle_UnaryNode(Node node)
         {
             Token token = node.Token;
@@ -129,6 +169,7 @@ namespace DaScript
             }
             throw new System.Exception();
         }
+
         private object Handle_ConditionNode(Node node)
         {
             Token token = node.Token;
@@ -150,6 +191,21 @@ namespace DaScript
                 default:
                     throw new System.Exception();
             }
+        }
+
+        private TableSymbol CreateTableValue(Node node) 
+        {
+
+            object value = node.GetValue();
+            if (value is string) 
+            {
+                return new StringSymbol(node.GetValue());
+            }
+            if (value is int)
+            { 
+                return new IntegerSymbol(node.GetValue()); 
+            }
+            throw new System.Exception();
         }
     }
 }

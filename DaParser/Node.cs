@@ -66,9 +66,33 @@ namespace DaScript
             statementList.Add(node);
         }
     }
-    public class FunctionNode : CompundStatementNode
+    public class FunctionCallNode : Node
     {
-        public FunctionNode(Token token) : base(token) { }
+        public VariableNode Callee;
+        private List<Node> arguments = new List<Node>();
+        public FunctionCallNode(Token token, VariableNode callee) : base(token)
+        {
+            Callee = callee;
+        }
+
+        public void AddArgument(Node argument) 
+        {
+            arguments.Add(argument);
+        }
+    }
+
+    public class BlockNode : CompundStatementNode
+    {
+        public Node Variable { get; private set; }
+        public BlockNode(Token token, Node variable) : base(token)
+        {
+            Variable = variable;
+        }
+
+        public override object GetValue()
+        {
+            return Variable.GetValue();
+        }
     }
     public class EmptyNode : Node
     {
@@ -90,4 +114,6 @@ namespace DaScript
             children.Add(value);
         }
     }
+
+
 }

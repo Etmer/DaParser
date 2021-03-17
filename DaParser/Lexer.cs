@@ -18,6 +18,7 @@ namespace DaScript
 
             { new TokenMatcher(TokenType.L_BLOCK, @"(\[)")},
             { new TokenMatcher(TokenType.R_BLOCK, @"(\])")},
+            { new TokenMatcher(TokenType.COMMA, @"(\,)")},
 
             { new TokenMatcher(TokenType.END, @"\b(end)\b")},
             { new TokenMatcher(TokenType.PROGRAM, @"\b(program)\b")},
@@ -70,6 +71,7 @@ namespace DaScript
 
                     case '[':
                     case ']':
+                        CreateTokenFromStringBuilder(sBuilder);
                         CreateTokenFromChar(current.Value);
                         break;
                     case '\'':
