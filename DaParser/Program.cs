@@ -8,18 +8,45 @@ namespace DaScript
 {
     class Program
     {
-        delegate object Function(List<object> args);
-
         static string s =
             @"
             program
+               
+                string s = 'TestString';
+                int i = 1;
+                double d = 1.2;
+                bool b = GetMeMyBool();
 
-                [MyName]
-                  CallMeMaybe();
+                [Start]
+                    SetText('Hello Adventurer');
+                    SetChoice('Show me your wares!', 'Wares');
+
+                    if(i == 1) then
+                        SetChoice('I did not find this on the doorstep', 'Quest');
+                    end
+
+                    if(b) then
+                        SetChoice('I found this on the doorstep', 'Quest');
+                    end
+                end
+
+                [Wares]
+                    SetText('I will not talk to you if you dont need anything');
+                    SetChoice('I need Potions','MyNextName');
+                    SetChoice('K Bye','Final');
+                end  
+                
+                [Quest]
+                    GoTo('MyNextName');
                 end
 
                 [MyNextName]
-                    AnotherVar = 'hello';
+                    SetText('My treasured trousers!!! I am so relieved thank you');
+                    SetChoice('I need Potions','Final');
+                end  
+                
+                [Final]
+                    SetText('Thank you!');
                 end
 
             !
@@ -36,19 +63,26 @@ namespace DaScript
             Lexer lexer = new Lexer();
             lexer.Tokenize(input);
             Parser parser = new Parser(lexer);
-            EventInterpreter interpreter = new EventInterpreter(parser.Parse());
+            DialogueInterpreter interpreter = new DialogueInterpreter(parser.Parse());
             interpreter.Interpret();
-            string nextInput = Console.ReadLine();
-            interpreter.VisitBlock(nextInput);
 
+            interpreter.StartDialogue();
+
+            while (true)
+            {
+                int idx = 0;
+                if (int.TryParse(Console.ReadLine(), out idx))
+                    interpreter.UpdateDialogue(idx); 
+            }
         }
     }
 
 
     public class TokenMatcher 
     {
-        private TokenType Type;
+        public TokenType Type { get;private set; }
         private Regex pattern;
+        private string matchValue;
 
         public TokenMatcher(TokenType type, string patternString) 
         {
@@ -56,16 +90,22 @@ namespace DaScript
             pattern = new Regex(patternString);
         }
 
-        public bool IsMatch(string input, ref Token token) 
+        public bool IsMatch(string input) 
         {
             Match match = pattern.Match(input);
-
-            if (match.Success)
+            if (match.Success) 
             {
-                token.Set(Type, match.Value);
-                return true;
+                matchValue = match.Value;
             }
-            return false;
+            return match.Success;
+        }
+
+        public Token CreateTokenFromMatch(TokenType? overwriteType = null) 
+        {
+            if(overwriteType.HasValue) 
+                return new Token(overwriteType.Value, matchValue);
+
+            return new Token(Type, matchValue);
         }
 
     }

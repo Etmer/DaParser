@@ -15,12 +15,12 @@ namespace DaScript
             { "FACTOR", new List<TokenType>(){ TokenType.MUL, TokenType.DIV, TokenType.EQUALS} },
         };
 
-        public Parser(Lexer lexer) 
+        public Parser(Lexer lexer)
         {
             this.lexer = lexer;
         }
 
-        public Node Parse() 
+        public Node Parse()
         {
             return Consume_Program();
         }
@@ -71,7 +71,7 @@ namespace DaScript
             throw new System.Exception();
         }
 
-        private bool ConsumeEntryToken() 
+        private bool ConsumeEntryToken()
         {
             Token token = lexer.GetNextToken();
             currentToken = token;
@@ -79,7 +79,7 @@ namespace DaScript
             return true;
         }
 
-        private Node Consume_Factor() 
+        private Node Consume_Factor()
         {
             Token token = currentToken;
 
@@ -105,6 +105,8 @@ namespace DaScript
                     Consume(TokenType.STRING);
                     Node stringValue = new StringNode(token);
                     return stringValue;
+                case TokenType.CALL:
+                    return Consume_FunctionCall();
             }
             throw new System.Exception();
         }
@@ -141,21 +143,30 @@ namespace DaScript
 
             while (currentToken.Type != TokenType.EOF)
             {
-                program.Append(Consume_Function());
+                program.Append(Consume_ProgramBlock());
             }
             Consume(TokenType.EOF);
             return program;
         }
 
-        private Node Consume_Function() 
+        private Node Consume_VariableDeclaration()
+        {
+            Token token = currentToken;
+            Consume(TokenType.TYPESPEC);
+            Node varDecl = Consume_ID(); 
+            Consume(TokenType.SEMI);
+            return varDecl;
+        }
+
+        private Node Consume_FunctionBlock()
         {
             Token token = currentToken;
 
-            switch (token.Type) 
+            switch (token.Type)
             {
                 case TokenType.L_BLOCK:
                     Consume(TokenType.L_BLOCK);
-                    BlockNode blockVar = new BlockNode(token,Consume_Variable());
+                    BlockNode blockVar = new BlockNode(token, Consume_Variable());
                     Consume(TokenType.R_BLOCK);
                     List<Node> blockNodes = Consume_StatementList();
 
@@ -168,6 +179,21 @@ namespace DaScript
             }
             throw new System.Exception();
         }
+
+        private Node Consume_ProgramBlock()
+        {
+            Token token = currentToken;
+
+            switch (token.Type)
+            {
+                case TokenType.TYPESPEC:
+                    return Consume_VariableDeclaration();
+                case TokenType.L_BLOCK:
+                    return Consume_FunctionBlock();
+            }
+            throw new System.Exception();
+        }
+
 
         private Node Consume_CompoundStatement()
         {
@@ -185,6 +211,7 @@ namespace DaScript
         private List<Node> Consume_StatementList()
         {
             Node node = Consume_Statement();
+
             List<Node> nodes = new List<Node>() { node };
 
             bool procede = currentToken.Type != TokenType.END;
@@ -209,10 +236,14 @@ namespace DaScript
         private Node Consume_Statement()
         {
             Token token = currentToken;
-            switch (token.Type) 
+            switch (token.Type)
             {
                 case TokenType.ID:
                     return Consume_ID();
+                case TokenType.CALL:
+                    Node call = Consume_FunctionCall();
+                    Consume(TokenType.SEMI);
+                    return call;
                 case TokenType.CONDITION:
                 case TokenType.ELSEIF:
                     Consume(TokenType.CONDITION, TokenType.ELSEIF);
@@ -224,6 +255,25 @@ namespace DaScript
                     return node;
             }
             throw new System.Exception();
+        }
+
+        private Node Consume_FunctionCall()
+        {
+            Token token = currentToken;
+
+            FunctionCallNode call = new FunctionCallNode(token, token.Value.ToString());
+            Consume(TokenType.CALL);
+            Consume(TokenType.L_PAREN);
+
+            while (currentToken.Type != TokenType.R_PAREN)
+            {
+                call.AddArgument(Consume_Term());
+                if (currentToken.Type == TokenType.COMMA)
+                    Consume(TokenType.COMMA);
+            }
+
+            Consume(TokenType.R_PAREN);
+            return call;
         }
 
         private Node Consume_Then() 
@@ -259,6 +309,7 @@ namespace DaScript
 
             return new VariableNode(token);
         }
+
         private Node Consume_ID()
         {
             Token token = currentToken;
@@ -266,25 +317,11 @@ namespace DaScript
 
             switch (currentToken.Type) 
             {
-                case TokenType.L_PAREN:
-                    FunctionCallNode call = new FunctionCallNode(token, variable);
-                    Consume(TokenType.L_PAREN);
-
-                    while (currentToken.Type != TokenType.R_PAREN) 
-                    {
-                        call.AddArgument(Consume_Term());
-                        Consume(TokenType.COMMA);
-                    }
-
-                    Consume(TokenType.R_PAREN);
-                    Consume(TokenType.SEMI);
-                    return call;
                 case TokenType.ASSIGN:
                     token = currentToken;
                     Consume(TokenType.ASSIGN);
                     Node assign_right = Consume_Expression();
-                    Consume(TokenType.SEMI);
-                    return new AssignmentNode(token, variable, assign_right);
+                    return new  AssignmentNode(token, variable, assign_right);
             }
             throw new System.Exception();
         }

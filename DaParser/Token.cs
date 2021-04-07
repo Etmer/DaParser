@@ -19,6 +19,8 @@ namespace DaScript
         EMPTY, // => emtpy node
         END, // => Program end
 
+        CALL, // => functions
+
         ASSIGN, // => =
         EQUALS, // => ==
         PLUS, // => +
@@ -37,6 +39,8 @@ namespace DaScript
         NUMBER,  // => numbers
         STRING, // => '...'
 
+        TYPESPEC, // => Integer, string bool, double
+
         EOF
     }
     public struct Token
@@ -49,7 +53,7 @@ namespace DaScript
             return new Token();
         }
 
-        public void Set(TokenType type, object value)
+        public Token(TokenType type, object value)
         {
             Type = type;
 

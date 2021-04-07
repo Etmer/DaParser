@@ -68,16 +68,16 @@ namespace DaScript
     }
     public class FunctionCallNode : Node
     {
-        public VariableNode Callee;
-        private List<Node> arguments = new List<Node>();
-        public FunctionCallNode(Token token, VariableNode callee) : base(token)
+        public string Callee;
+        public List<Node> Arguments = new List<Node>();
+        public FunctionCallNode(Token token, string callee) : base(token)
         {
             Callee = callee;
         }
 
         public void AddArgument(Node argument) 
         {
-            arguments.Add(argument);
+            Arguments.Add(argument);
         }
     }
 

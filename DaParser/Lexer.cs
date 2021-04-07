@@ -12,16 +12,12 @@ namespace DaScript
         private List<Token> tokens = new List<Token>();
         private List<TokenMatcher> tokenMatchers = new List<TokenMatcher>()
         {
-            { new TokenMatcher(TokenType.CONDITION, @"\b(if)\b")},
             { new TokenMatcher(TokenType.FUNC, @"\b(function)\b")},
-            { new TokenMatcher(TokenType.EOF, @"(\!)")},
 
             { new TokenMatcher(TokenType.L_BLOCK, @"(\[)")},
             { new TokenMatcher(TokenType.R_BLOCK, @"(\])")},
             { new TokenMatcher(TokenType.COMMA, @"(\,)")},
 
-            { new TokenMatcher(TokenType.END, @"\b(end)\b")},
-            { new TokenMatcher(TokenType.PROGRAM, @"\b(program)\b")},
             { new TokenMatcher(TokenType.EQUALS, @"(\==)")},
             { new TokenMatcher(TokenType.ASSIGN, @"(\=)")},
             { new TokenMatcher(TokenType.PLUS, @"(\+)")},
@@ -31,13 +27,25 @@ namespace DaScript
             { new TokenMatcher(TokenType.DIV, @"(\/)")},
             { new TokenMatcher(TokenType.STRING, @"(?<=\')(.?)*(?=\')")},
             { new TokenMatcher(TokenType.EOF, @"(\0)")},
-            { new TokenMatcher(TokenType.THEN,@"\b(then)\b")},
-            { new TokenMatcher(TokenType.ELSEIF,@"\b(elif)\b")},
-            { new TokenMatcher(TokenType.ELSE,@"\b(else)\b")},
             { new TokenMatcher(TokenType.ID, @"\b((?i)[a-aZ-z_][a-aZ-z0-9_]*)\b")},
             { new TokenMatcher(TokenType.L_PAREN, @"(\()")},
             { new TokenMatcher(TokenType.NUMBER, @"\d+")},
             { new TokenMatcher(TokenType.R_PAREN, @"(\))")},
+            { new TokenMatcher(TokenType.EOF, @"(\!)")},
+        };
+
+        private Dictionary<string, Token> keywords = new Dictionary<string, Token>()
+        {
+            { "if", new Token(TokenType.CONDITION, null) },
+            { "else",  new Token(TokenType.ELSE, null) },
+            { "elif", new Token(TokenType.ELSEIF, null) },
+            { "program", new Token(TokenType.PROGRAM,null) },
+            { "end",  new Token(TokenType.END,null)},
+            { "then",  new Token(TokenType.THEN,null) },
+            { "string",  new Token(TokenType.TYPESPEC, typeof(string))},
+            { "int",new Token(TokenType.TYPESPEC, typeof(int))},
+            { "double",new Token(TokenType.TYPESPEC, typeof(double))},
+            { "bool", new Token(TokenType.TYPESPEC, typeof(bool))},
         };
 
         public bool HasToken() 
@@ -81,8 +89,8 @@ namespace DaScript
                     case '-':
                     case '+':
                         CreateTokenFromStringBuilder(sBuilder);
-                        char next = ' ';
-                        if (PeekNextChar(ref next, input))
+                        char? next = PeekNextChar();
+                        if (next.HasValue)
                         {
                             if (next == '=')
                             {
@@ -122,13 +130,32 @@ namespace DaScript
         }
 
         private void Do(string input) 
-        { 
+        {
+            if (IsKeyword(input)) 
+            {
+                tokens.Add(CreateTokenForKeyword(input));
+                return;
+            }
+
             foreach (TokenMatcher matcher in tokenMatchers)
             {
-                Token token = Token.CreateEmpty();
-                if (matcher.IsMatch(input, ref token))
+                if (matcher.IsMatch(input))
                 {
-                    tokens.Add(token);
+                    if (matcher.Type == TokenType.ID)
+                    {
+                        if (current.HasValue)
+                        {
+                            if(current.Value == '(')
+                            {
+                                Token t = matcher.CreateTokenFromMatch(TokenType.CALL);
+                                tokens.Add(t);
+                                break;
+                            }
+                                
+                        }
+
+                    }
+                    tokens.Add(matcher.CreateTokenFromMatch());
                     break;
                 }
             }
@@ -144,15 +171,13 @@ namespace DaScript
             return null;
         }
 
-        private bool PeekNextChar(ref char next, string input)
+        private char? PeekNextChar()
         {
             int idx = index + 1;
-            if (index < input.Length)
-            {
-                next = input[idx];
-                return true;
-            }
-            return false;
+            if (idx < input.Length)
+                return input[idx];
+
+            return null;
         }
 
         private void CreateTokenFromStringBuilder(StringBuilder stringBuilder) 
@@ -184,6 +209,16 @@ namespace DaScript
             sBuilder.Append(current);
 
             CreateTokenFromStringBuilder(sBuilder);
+        }
+
+        private bool IsKeyword(string input) 
+        {
+            return keywords.ContainsKey(input);
+        }
+
+        private Token CreateTokenForKeyword(string input)
+        {
+            return keywords[input];
         }
     }
 }
