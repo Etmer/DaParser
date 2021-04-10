@@ -11,14 +11,13 @@ namespace DaScript
   
     public interface ITableValue
     {  
-        object GetValue();
+        object GetValue(List<object> arguments = null);
     }
     public abstract class TableValue<T> : ITableValue
     {
         protected T Value;
 
-
-        public object GetValue() 
+        public virtual object GetValue(List<object> arguments = null)
         {
             return Value;
         }
@@ -66,17 +65,11 @@ namespace DaScript
     public class FunctionValue : TableValue<Delegate>
     {
         private object functionOwner;
+
         public FunctionValue(object value)
         {
             CreateFromDelegate((Delegate)value);
         }
-        public object Call(List<object> arguments)
-        {
-            List<object> actualArguments = new List<object>() { functionOwner };
-            actualArguments.AddRange(arguments);
-            return Value.DynamicInvoke(actualArguments.ToArray());
-        }
-
         private void CreateFromDelegate(Delegate d)
         {
             MethodInfo method = d.Method;
@@ -95,13 +88,24 @@ namespace DaScript
 
             Value = lambda.Compile();
         }
+
+        public override object GetValue(List<object> arguments)
+        {
+            arguments.Insert(0, functionOwner);
+            return Value.DynamicInvoke(arguments.ToArray());
+        }
     }
 
-    public class EventValue : TableValue<BlockNode>
+    public class BlockValue : TableValue<BlockNode>
     {
-        public EventValue(BlockNode value) 
+        public BlockValue(BlockNode value) 
         {
             Value = value;
+        }
+
+        public BlockNode GetBlock() 
+        {
+            return Value;
         }
     }
 }

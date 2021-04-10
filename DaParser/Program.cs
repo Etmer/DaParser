@@ -21,7 +21,7 @@ namespace DaScript
                     SetText('Hello Adventurer');
                     SetChoice('Show me your wares!', 'Wares');
 
-                    if(i == 1) then
+                    if(i == 2) then
                         SetChoice('I did not find this on the doorstep', 'Quest');
                     end
 
@@ -60,10 +60,10 @@ namespace DaScript
 
         static void CreateTokens(string input)
         {
-            Lexer lexer = new Lexer();
-            lexer.Tokenize(input);
-            Parser parser = new Parser(lexer);
-            DialogueInterpreter interpreter = new DialogueInterpreter(parser.Parse());
+            Script script = new Script();
+            Node node = script.Parse(input);
+
+            DialogueInterpreter interpreter = new DialogueInterpreter(node);
             interpreter.Interpret();
 
             interpreter.StartDialogue();

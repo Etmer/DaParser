@@ -41,7 +41,7 @@ namespace DaScript
                     result = Visit_NumberNode(node);
                     break;
                 case TokenType.L_BLOCK:
-                    result = Visit_CompoundNode(node);
+                    result = Visit_AssignNode(node);
                     break;
                 case TokenType.ID:
                     result = Visit_VariableNode(node);
@@ -57,6 +57,9 @@ namespace DaScript
                     break;
                 case TokenType.CALL:
                     result = Visit_FunctionCallNode(node);
+                    break;
+                case TokenType.TYPESPEC:
+                    result = Visit_VariableDeclarationNode(node);
                     break;
             }
             return result;
@@ -76,7 +79,7 @@ namespace DaScript
         private object Visit_VariableNode(Node node)
         {
             string name = (string)node.GetValue();
-            return GlobalMemory[name];
+            return ((ITableValue)GlobalMemory[name]).GetValue();
         }
 
         private object Visit_FunctionCallNode(Node node)
@@ -92,13 +95,16 @@ namespace DaScript
                 arguments.Add(value);
             }
 
-            return ((FunctionValue)GlobalMemory[name]).Call(arguments);
+            FunctionValue funcValue = (FunctionValue)GlobalMemory[name];
+
+
+            return funcValue.GetValue(arguments);
         }
 
         public void EnterBlockNode(string name)
         {
-            EventValue symbol = GlobalMemory[name] as EventValue;
-            Visit(symbol.GetValue() as BlockNode);
+            BlockValue blockNode = GlobalMemory[name] as BlockValue;
+            Visit_CompoundNode(blockNode.GetBlock());
         }
 
         private object Visit_MainNode(Node node)
@@ -115,7 +121,12 @@ namespace DaScript
         {
             string name = (string)node.children[0].GetValue();
 
-            GlobalMemory[name] = Visit(node.children[1]);
+            if (node.Token.Type != TokenType.L_BLOCK)
+                GlobalMemory[name] = Visit(node.children[1]);
+            else 
+            {
+                GlobalMemory[name] = node;
+            }
 
             return 1;
         }
@@ -187,6 +198,11 @@ namespace DaScript
                 default:
                     throw new System.Exception();
             }
+        }
+
+        private object Visit_VariableDeclarationNode(Node node)
+        {
+            return Visit(node.children[0]);
         }
 
         private System.Exception OnError(TokenType type) 

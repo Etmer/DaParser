@@ -40,29 +40,40 @@ namespace DaScript
 
         private void CreateTableValueFromObject(string identifier, object obj)
         {
-            ITableValue symbol = null;
+            object value = null;
 
             if (obj is Delegate)
             {
-                symbol = new FunctionValue(obj);
+                value = new FunctionValue(obj);
             }
-            if(obj is int)
+            else if (obj is CompundStatementNode)
             {
-                symbol = new IntegerValue(obj);
+                value = new BlockValue(obj as BlockNode);
             }
-            if (obj is string)
+            else if(obj is int)
             {
-                symbol = new StringValue(obj);
+                value = new IntegerValue(obj);
             }
-            if (obj is double)
+            else if (obj is string)
             {
-                symbol = new DoubleValue(obj);
+                value = new StringValue(obj);
             }
+            else if (obj is double)
+            {
+                value = new DoubleValue(obj);
+            }
+            else if (obj is bool)
+            {
+                value = new BooleanValue(obj);
+            }
+            else
+                value = obj;
+
 
             if (memory.ContainsKey(identifier))
-                memory[identifier] = symbol;
+                memory[identifier] = value;
             else
-                memory.Add(identifier, symbol);
+                memory.Add(identifier, value);
         }
     }
 }
