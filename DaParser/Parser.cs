@@ -241,7 +241,9 @@ namespace DaScript
             switch (token.Type)
             {
                 case TokenType.ID:
-                    return Consume_ID();
+                    Node IdNode = Consume_ID();
+                    Consume(TokenType.SEMI);
+                    return IdNode;
                 case TokenType.CALL:
                     Node call = Consume_FunctionCall();
                     Consume(TokenType.SEMI);

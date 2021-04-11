@@ -18,6 +18,8 @@ namespace DaScript
                 bool b = GetMeMyBool();
 
                 [Start]
+                    i = 4;
+
                     SetText('Hello Adventurer');
                     SetChoice('Show me your wares!', 'Wares');
 

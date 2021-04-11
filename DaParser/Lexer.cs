@@ -42,10 +42,10 @@ namespace DaScript
             { "program", new Token(TokenType.PROGRAM,null) },
             { "end",  new Token(TokenType.END,null)},
             { "then",  new Token(TokenType.THEN,null) },
-            { "string",  new Token(TokenType.TYPESPEC, typeof(string))},
-            { "int",new Token(TokenType.TYPESPEC, typeof(int))},
-            { "double",new Token(TokenType.TYPESPEC, typeof(double))},
-            { "bool", new Token(TokenType.TYPESPEC, typeof(bool))},
+            { "string",  new Token(TokenType.TYPESPEC, "String")},
+            { "int",new Token(TokenType.TYPESPEC, "Integer")},
+            { "double",new Token(TokenType.TYPESPEC, "Double")},
+            { "bool", new Token(TokenType.TYPESPEC, "Boolean")},
         };
 
         public bool HasToken() 

@@ -23,9 +23,16 @@ namespace DaScript
             symbols.Add(symbol.Name, symbol);
         }
 
-        public ISymbol LookUp(string name) 
+        public bool LookUp(string name, out ISymbol symbol) 
         {
-            return symbols[name];
+            bool result = symbols.ContainsKey(name);
+
+            if (result)
+                symbol = symbols[name];
+            else
+                symbol = null;
+
+            return result;
         }
 
         private void DefineBuildInTypes() 

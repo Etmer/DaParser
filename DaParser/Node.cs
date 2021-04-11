@@ -59,8 +59,10 @@ namespace DaScript
     }
     public class VariableDeclarationNode : Node
     {
+        public Node Variable { get; private set; }
         public VariableDeclarationNode(Token token, Node declarationPart) : base(token)
         {
+            Variable = declarationPart.children[0];
             children.Add(declarationPart);
         }
     }
