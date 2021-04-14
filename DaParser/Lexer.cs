@@ -167,6 +167,9 @@ namespace DaScript
                             } 
                         }
                     }
+                    if (matcher.Type == TokenType.STRING)
+                        input = input.Replace("\'","");
+
                     EndCreateNewToken(matcher.Type, input);
                     break;
                 }
