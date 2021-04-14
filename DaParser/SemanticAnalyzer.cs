@@ -19,11 +19,11 @@ namespace DaScript
             return table;
         }
 
-        private void Visit(Node node) 
+        private void Visit(Node node)
         {
             Token token = node.Token;
 
-            switch (token.Type) 
+            switch (token.Type)
             {
                 case TokenType.TYPESPEC:
                     Visit_VariableDeclaration(node);
@@ -37,15 +37,12 @@ namespace DaScript
                 case TokenType.ASSIGN:
                     Visit_AssignNode(node);
                     break;
+                case TokenType.ID:
+                    Visit_Id(node);
+                    break;
             }
         }
-
-        private void VisitBlock(Node node) 
-        {
-
-        }
-
-        private void Visit_VariableDeclaration(Node node) 
+        private void Visit_VariableDeclaration(Node node)
         {
             VariableDeclarationNode varDeclNode = node as VariableDeclarationNode;
 
@@ -56,13 +53,15 @@ namespace DaScript
                 string symbolName = varDeclNode.Variable.GetValue() as string;
                 ISymbol varSymbol = new VariableSymbol(symbolName, symbol);
 
-                table.Define(varSymbol);
+                if(!table.Define(varSymbol))
+                    throw new System.Exception($"Symbol with name <{symbolName}> has already been defined");
+
                 return;
             }
             throw new System.Exception();
         }
 
-        private void Visit_Id(Node node) 
+        private void Visit_Id(Node node)
         {
             string name = node.GetValue() as string;
 
@@ -73,13 +72,47 @@ namespace DaScript
 
         }
 
-        private void Visit_AssignNode(Node node) 
+        private void Visit_AssignNode(Node node)
         {
             string name = node.children[0].GetValue() as string;
 
             if (!table.LookUp(name, out ISymbol symbol))
-            {
                 throw new System.Exception($"Symbol with name <{name}> is undefined");
+            else
+                Visit_Expression(node.children[1]);
+        }
+
+        private void Visit_Expression(Node node)
+        {
+            Token token = node.Token;
+
+            switch (token.Type)
+            {
+                case TokenType.PLUS:
+                case TokenType.MINUS:
+                case TokenType.MUL:
+                case TokenType.DIV:
+                    Visit_ExpressionPart(node.children[0]);
+                    Visit_ExpressionPart(node.children[1]);
+                    break;
+            }
+        }
+
+        private void Visit_ExpressionPart(Node node)
+        {
+            Token token = node.Token;
+
+            switch (token.Type)
+            {
+                case TokenType.ID:
+                    Visit_Id(node);
+                    break;
+                case TokenType.PLUS:
+                case TokenType.MINUS:
+                case TokenType.DIV:
+                case TokenType.MUL:
+                    Visit_Expression(node);
+                    break;
             }
         }
     }

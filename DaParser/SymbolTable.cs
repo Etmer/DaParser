@@ -18,9 +18,13 @@ namespace DaScript
         private Dictionary<string, ISymbol> symbols = new Dictionary<string, ISymbol>();
         public SymbolTable() { DefineBuildInTypes(); }
 
-        public void Define(ISymbol symbol) 
+        public bool Define(ISymbol symbol) 
         {
+            if (symbols.ContainsKey(symbol.Name))
+                return false;
+
             symbols.Add(symbol.Name, symbol);
+            return true;
         }
 
         public bool LookUp(string name, out ISymbol symbol) 
@@ -37,10 +41,10 @@ namespace DaScript
 
         private void DefineBuildInTypes() 
         {
-            Define(new IntegerSymbol("Integer"));
-            Define(new DoubleSymbol("Double"));
-            Define(new StringSymbol("String"));
-            Define(new BooleanSymbol("Boolean"));
+            Define(new IntegerSymbol("int"));
+            Define(new DoubleSymbol("double"));
+            Define(new StringSymbol("string"));
+            Define(new BooleanSymbol("bool"));
         } 
     }
 

@@ -8,10 +8,17 @@ namespace DaScript
     {
         protected Table GlobalMemory = new Table();
         private Node tree = null;
-       
-        public Interpreter(Node tree) 
+        private SymbolTable symbolTable;
+
+        public Interpreter() { }
+
+        public void SetTree(Node node) 
         {
-            this.tree = tree;
+            tree = node;
+        }
+        public void SetSymbolTable(SymbolTable table)
+        {
+            symbolTable = table;
         }
 
         public void Interpret() 
@@ -170,9 +177,9 @@ namespace DaScript
             switch (token.Type) 
             {
                 case TokenType.PLUS:
-                    return +(double)node.children[0].GetValue();
+                    return +(double)Visit(node.children[0]);
                 case TokenType.MINUS:
-                    return -(double)node.children[0].GetValue();
+                    return -(double)Visit(node.children[0]);
             }
             throw OnError(token.Type);
         }

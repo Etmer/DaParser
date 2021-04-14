@@ -4,10 +4,21 @@ using System.Text;
 
 namespace DaScript
 {
-    class Lexer
+    public enum LexicalError 
     {
+
+    }
+
+    public class Lexer
+    {
+        private StringBuilder sBuilder;
+
+        private Token currentToken;
+        private int currentLine = 1;
+        private int currentColumn = 0;
+
         private string input;
-        private char? current;
+        private char? currentChar;
         private int index = 0;
         private List<Token> tokens = new List<Token>();
         private List<TokenMatcher> tokenMatchers = new List<TokenMatcher>()
@@ -34,18 +45,18 @@ namespace DaScript
             { new TokenMatcher(TokenType.EOF, @"(\!)")},
         };
 
-        private Dictionary<string, Token> keywords = new Dictionary<string, Token>()
+        private Dictionary<string, TokenType> keywords = new Dictionary<string, TokenType>()
         {
-            { "if", new Token(TokenType.CONDITION, null) },
-            { "else",  new Token(TokenType.ELSE, null) },
-            { "elif", new Token(TokenType.ELSEIF, null) },
-            { "program", new Token(TokenType.PROGRAM,null) },
-            { "end",  new Token(TokenType.END,null)},
-            { "then",  new Token(TokenType.THEN,null) },
-            { "string",  new Token(TokenType.TYPESPEC, "String")},
-            { "int",new Token(TokenType.TYPESPEC, "Integer")},
-            { "double",new Token(TokenType.TYPESPEC, "Double")},
-            { "bool", new Token(TokenType.TYPESPEC, "Boolean")},
+            { "if", TokenType.CONDITION },
+            { "else", TokenType.ELSE },
+            { "elif", TokenType.ELSEIF },
+            { "program", TokenType.PROGRAM },
+            { "end",  TokenType.END },
+            { "then",  TokenType.THEN },
+            { "string", TokenType.TYPESPEC },
+            { "int", TokenType.TYPESPEC },
+            { "double", TokenType.TYPESPEC },
+            { "bool", TokenType.TYPESPEC },
         };
 
         public bool HasToken() 
@@ -56,70 +67,72 @@ namespace DaScript
         public void Tokenize(string input)
         {
             this.input = input;
-            current = GetNextChar();
+            currentChar = GetNextChar();
 
-            StringBuilder sBuilder = new StringBuilder();
+            sBuilder = new StringBuilder();
 
-            while(current != null)
+            while(currentChar != null)
             {
-                switch (current)
+                switch (currentChar)
                 {
                     case '\r':
+                        break;
                     case '\n':
-                        CreateTokenFromStringBuilder(sBuilder);
+                        currentLine++;
+                        currentColumn = 0;
                         break;
                     case ' ':
-                        CreateTokenFromStringBuilder(sBuilder);
                         break;
                     case '(':
                     case ')':
-                        CreateTokenFromStringBuilder(sBuilder);
-                        CreateTokenFromChar(current.Value);
+                        StartCreateNewToken(currentLine,currentColumn);
+                        CreateTokenFromChar(currentChar.Value);
                         break;
 
                     case '[':
                     case ']':
-                        CreateTokenFromStringBuilder(sBuilder);
-                        CreateTokenFromChar(current.Value);
+                        StartCreateNewToken(currentLine, currentColumn);
+                        CreateTokenFromChar(currentChar.Value);
                         break;
                     case '\'':
+                        StartCreateNewToken(currentLine, currentColumn);
                         HandleString(input, sBuilder);
                         break;
                     case '=':
                     case '-':
                     case '+':
-                        CreateTokenFromStringBuilder(sBuilder);
+                        StartCreateNewToken(currentLine, currentColumn);
                         char? next = PeekNextChar();
                         if (next.HasValue)
                         {
                             if (next == '=')
                             {
-                                sBuilder.Append(current);
+                                sBuilder.Append(currentChar);
                                 sBuilder.Append(next);
                                 Do(sBuilder.ToString());
-                                sBuilder.Clear();
-                                current = GetNextChar();
-                                current = GetNextChar();
+                                currentChar = GetNextChar();
+                                currentChar = GetNextChar();
                                 break;
                             }
                         }
-                        Do(current.ToString());
+                        Do(currentChar.ToString());
                         break;
                     case ';':
-                        Do(sBuilder.ToString());
-                        Do(current.ToString());
-                        sBuilder.Clear();
+                        StartCreateNewToken(currentLine, currentColumn);
+                        Do(currentChar.ToString());
                         break;
                     case '!':
-                        CreateTokenFromStringBuilder(sBuilder);
-                        CreateTokenFromChar(current.Value);
+                        StartCreateNewToken(currentLine, currentColumn);
+                        CreateTokenFromChar(currentChar.Value);
                         break;
                     default:
-                        sBuilder.Append(current);
+                        StartCreateNewToken(currentLine, currentColumn);
+                        CreateIDToken(sBuilder);
+                        Do(sBuilder.ToString());
                         break;
                 }
 
-                current = GetNextChar();
+                currentChar = GetNextChar();
             }
             index = 0;
         }
@@ -134,6 +147,7 @@ namespace DaScript
             if (IsKeyword(input)) 
             {
                 tokens.Add(CreateTokenForKeyword(input));
+                sBuilder.Clear();
                 return;
             }
 
@@ -143,19 +157,17 @@ namespace DaScript
                 {
                     if (matcher.Type == TokenType.ID)
                     {
-                        if (current.HasValue)
+                        char? next = PeekNextChar();
+                        if (next.HasValue)
                         {
-                            if(current.Value == '(')
+                            if(next.Value == '(')
                             {
-                                Token t = matcher.CreateTokenFromMatch(TokenType.CALL);
-                                tokens.Add(t);
+                                EndCreateNewToken(TokenType.CALL, input);
                                 break;
-                            }
-                                
+                            } 
                         }
-
                     }
-                    tokens.Add(matcher.CreateTokenFromMatch());
+                    EndCreateNewToken(matcher.Type, input);
                     break;
                 }
             }
@@ -164,6 +176,8 @@ namespace DaScript
         private char? GetNextChar()
         {
             index++;
+            currentColumn++;
+
             if (index < input.Length)
             {
                 return input[index];
@@ -198,15 +212,15 @@ namespace DaScript
         {
             CreateTokenFromStringBuilder(sBuilder);
 
-            sBuilder.Append(current);
-            current = GetNextChar().Value;
+            sBuilder.Append(currentChar);
+            currentChar = GetNextChar().Value;
 
-            while (current != '\'')
+            while (currentChar != '\'')
             {
                 sBuilder.Append(input[index]);
-                current = GetNextChar().Value;
+                currentChar = GetNextChar().Value;
             }
-            sBuilder.Append(current);
+            sBuilder.Append(currentChar);
 
             CreateTokenFromStringBuilder(sBuilder);
         }
@@ -218,7 +232,53 @@ namespace DaScript
 
         private Token CreateTokenForKeyword(string input)
         {
-            return keywords[input];
+            TokenType type = keywords[input];
+            currentToken.SetType(type);
+            currentToken.SetValue(input);
+            return currentToken;
+        }
+
+
+        public void StartCreateNewToken(int line, int column) 
+        {
+            currentToken = new Token();
+            currentToken.SetPosition(line, column);
+        }
+
+        public void EndCreateNewToken(TokenType type, string input) 
+        {
+            currentToken.SetType(type);
+            currentToken.SetValue(input);
+            tokens.Add(currentToken);
+            sBuilder.Clear();
+
+        }
+
+        private void CreateIDToken(StringBuilder sBuilder) 
+        {
+            char? itrChar = currentChar;
+            sBuilder.Append(itrChar.Value);
+
+            if (char.IsDigit(itrChar.Value))
+            {
+                itrChar = PeekNextChar();
+                while (char.IsDigit(itrChar.Value))
+                {
+                    sBuilder.Append(itrChar.Value);
+                    index++;
+                    itrChar = PeekNextChar();
+                }
+            }
+            else if (char.IsLetter(itrChar.Value))
+            {
+                itrChar = PeekNextChar();
+                while (char.IsLetterOrDigit(itrChar.Value))
+                {
+                    sBuilder.Append(itrChar.Value);
+                    index++;
+                    itrChar = PeekNextChar();
+                }
+            }
         }
     }
 }

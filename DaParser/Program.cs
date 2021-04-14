@@ -9,16 +9,15 @@ namespace DaScript
     class Program
     {
         static string s =
-            @"
+@"
             program
                
                 string s = 'TestString';
                 int i = 1;
-                double d = 1.2;
+                double d = 2;
                 bool b = GetMeMyBool();
 
                 [Start]
-                    i = 4;
 
                     SetText('Hello Adventurer');
                     SetChoice('Show me your wares!', 'Wares');
@@ -62,19 +61,15 @@ namespace DaScript
 
         static void CreateTokens(string input)
         {
-            Script script = new Script();
-            Node node = script.Parse(input);
-
-            DialogueInterpreter interpreter = new DialogueInterpreter(node);
-            interpreter.Interpret();
-
-            interpreter.StartDialogue();
+            Script<DialogueInterpreter> script = new Script<DialogueInterpreter>();
+            script.Parse(input);
+            script.Interpreter.StartDialogue();
 
             while (true)
             {
                 int idx = 0;
                 if (int.TryParse(Console.ReadLine(), out idx))
-                    interpreter.UpdateDialogue(idx); 
+                    script.Interpreter.UpdateDialogue(idx);
             }
         }
     }
@@ -102,13 +97,6 @@ namespace DaScript
             return match.Success;
         }
 
-        public Token CreateTokenFromMatch(TokenType? overwriteType = null) 
-        {
-            if(overwriteType.HasValue) 
-                return new Token(overwriteType.Value, matchValue);
-
-            return new Token(Type, matchValue);
-        }
 
     }
 }

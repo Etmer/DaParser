@@ -48,30 +48,39 @@ namespace DaScript
         public TokenType Type { get; private set; }
         public object Value { get; private set; }
 
+        public int Line { get; private set; }
+        public int Column { get; private set; }
+
         public static Token CreateEmpty() 
         {
             return new Token();
         }
 
-        public Token(TokenType type, object value)
+        public void SetType(TokenType type) 
         {
             Type = type;
+        }
 
-            switch (type) 
+        public void SetValue(object value) 
+        {
+            switch (Type)
             {
                 case TokenType.NUMBER:
-                    value = Convert.ToDouble(value);
+                    Value = Convert.ToDouble(value);
                     break;
                 case TokenType.BOOLEAN:
-                    value = Convert.ToBoolean(value);
+                    Value = Convert.ToBoolean(value);
                     break;
-                case TokenType.STRING:
-                    value = Convert.ToString(value);
+                default:
+                    Value = Convert.ToString(value);
                     break;
             }
+        }
 
-
-            Value = value;
+        public void SetPosition(int line, int column) 
+        {
+            Line = line;
+            Column = column;
         }
 
         public object GetValue() 

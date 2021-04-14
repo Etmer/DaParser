@@ -9,7 +9,7 @@ namespace DaScript
         public System.Action<ErrorCode> OnError;
         public Dialogue currentDialogue { get; private set; } = new Dialogue(5);
 
-        public DialogueInterpreter(Node node) : base(node) 
+        public DialogueInterpreter() : base() 
         {
             GlobalMemory["SetText"] = (System.Action<string>)SetText;
             GlobalMemory["SetChoice"] = (System.Action<string,string>)SetChoice;
@@ -24,6 +24,7 @@ namespace DaScript
         }
         public void StartDialogue() 
         {
+            Interpret();
             EnterBlockNode("Start");
             Print();
         }
