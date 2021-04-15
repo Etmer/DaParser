@@ -49,8 +49,6 @@ namespace DaScript
                 [Final]
                     SetText('Thank you!');
                 end
-
-            !
         ";
 
 
@@ -78,8 +76,9 @@ namespace DaScript
     public class TokenMatcher 
     {
         public TokenType Type { get;private set; }
+        public string MatchValue { get; private set; }
+
         private Regex pattern;
-        private string matchValue;
 
         public TokenMatcher(TokenType type, string patternString) 
         {
@@ -92,7 +91,7 @@ namespace DaScript
             Match match = pattern.Match(input);
             if (match.Success) 
             {
-                matchValue = match.Value;
+                MatchValue = match.Value;
             }
             return match.Success;
         }
