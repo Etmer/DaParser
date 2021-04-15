@@ -4,7 +4,7 @@ using System.Text;
 
 namespace DaScript
 {
-    class SemanticAnalyzer
+    class SemanticAnalyzer : InterpreterStep
     {
         private SymbolTable table;
         public SymbolTable Analyze(Node node)

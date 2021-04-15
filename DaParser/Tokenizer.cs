@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 
 namespace DaScript
 {
-    public class Tokenizer
+    public class Tokenizer : InterpreterStep
     {
         private const char STRING_DELIMETER = '\'';
         private const char EQUALSIGN = '=';
@@ -18,7 +17,7 @@ namespace DaScript
         private Token currentToken;
 
         private int currentLine = 1;
-        private int currentColumn = 0;
+        private int currentColumn = 1;
 
         private int index = 0;
 
@@ -60,7 +59,7 @@ namespace DaScript
         };
 
         /// <summary>
-        /// Splits the input string and creates tokens from that input string
+        /// Returns a list of tokens from input string
         /// </summary>
         /// <param name="input"></param>
         public List<Token> Tokenize(string input)
@@ -81,7 +80,7 @@ namespace DaScript
                         break;
                     case '\n':
                         currentLine++;
-                        currentColumn = 0;
+                        currentColumn = 1;
                         break;
                     case ' ':
                         break;
@@ -105,10 +104,6 @@ namespace DaScript
                         StartCreateNewToken(currentLine, currentColumn);
                         result.Add(Create(currentChar.ToString()));
                         break;
-                    //case '!':
-                    //    StartCreateNewToken(currentLine, currentColumn);
-                    //    result.Add(Create(currentChar.Value));
-                    //    break;
                     default:
                         StartCreateNewToken(currentLine, currentColumn);
                         result.Add(Create(CreateIDString(sourceString)));
@@ -172,7 +167,7 @@ namespace DaScript
         /// </summary>
         /// <param name="line"></param>
         /// <param name="column"></param>
-        public void StartCreateNewToken(int line, int column)
+        private void StartCreateNewToken(int line, int column)
         {
             currentToken = new Token();
             currentToken.SetPosition(line, column);
@@ -208,6 +203,9 @@ namespace DaScript
                 {
                     Advance();
                 }
+
+                //if (char.IsLetter(itrChar.Value))
+                //    Error(LexicalError.InvalidVariableName);
             }
             else if (char.IsLetter(itrChar.Value))
             {
@@ -291,13 +289,10 @@ namespace DaScript
                             }
                         }
                     }
-
                     return EndCreateNewToken(matcher.Type, matcher.MatchValue);
                 }
             }
-
-            throw new System.Exception();
+            return EndCreateNewToken(TokenType.NONE, null);
         }
-
     }
 }

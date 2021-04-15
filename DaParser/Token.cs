@@ -7,6 +7,7 @@ namespace DaScript
 {
     public enum TokenType
     {
+        NONE, //=> none: shouldthrow error
         ID, // => alphanumerical
 
         //Keywords

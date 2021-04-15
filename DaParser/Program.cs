@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Reflection;
 
 namespace DaScript
 {
     class Program
     {
         static string s =
-@"
-            program
+@"        program
                
                 string s = 'TestString';
                 int i = 1;
@@ -22,7 +17,7 @@ namespace DaScript
                     SetText('Hello Adventurer');
                     SetChoice('Show me your wares!', 'Wares');
 
-                    if(i == 2) then
+                    if(i =!= 2) then
                         SetChoice('I did not find this on the doorstep', 'Quest');
                     end
 
@@ -54,10 +49,10 @@ namespace DaScript
 
         static void Main(string[] args)
         {
-            CreateTokens(s);
+            ProcessSourcestring(s);
         }
 
-        static void CreateTokens(string input)
+        static void ProcessSourcestring(string input)
         {
             Script<DialogueInterpreter> script = new Script<DialogueInterpreter>();
             script.Parse(input);
@@ -71,31 +66,5 @@ namespace DaScript
             }
         }
     }
-
-
-    public class TokenMatcher 
-    {
-        public TokenType Type { get;private set; }
-        public string MatchValue { get; private set; }
-
-        private Regex pattern;
-
-        public TokenMatcher(TokenType type, string patternString) 
-        {
-            Type = type;
-            pattern = new Regex(patternString);
-        }
-
-        public bool IsMatch(string input) 
-        {
-            Match match = pattern.Match(input);
-            if (match.Success) 
-            {
-                MatchValue = match.Value;
-            }
-            return match.Success;
-        }
-
-
-    }
+    
 }

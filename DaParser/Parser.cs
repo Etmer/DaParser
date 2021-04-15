@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace DaScript
 {
-    class Parser
+    public class Parser : InterpreterStep
     {
         private Token currentToken;
         private Lexer lexer = null;
@@ -15,13 +14,9 @@ namespace DaScript
             { "FACTOR", new List<TokenType>(){ TokenType.MUL, TokenType.DIV, TokenType.EQUALS} },
         };
 
-        public Parser(Lexer lexer)
+        public Node Parse(Lexer lexer)
         {
             this.lexer = lexer;
-        }
-
-        public Node Parse()
-        {
             return Consume_Program();
         }
 
@@ -44,10 +39,9 @@ namespace DaScript
                         Console.WriteLine("Program terminated successfully.");
                         return;
                     }
-
                 }
             }
-            throw new System.Exception();
+            throw new ScriptException(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
 
         //Program : DeclarationBlock -> ProgramBlock*

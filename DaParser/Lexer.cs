@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace DaScript
 {
-    public enum LexicalError 
-    {
-
-    }
-
-    public class Lexer
+    public class Lexer : InterpreterStep
     {
         private int index = 0;
         private Tokenizer tokenizer = new Tokenizer();
@@ -37,6 +30,5 @@ namespace DaScript
         {
             return tokens[index++];
         }
-
     }
 }
