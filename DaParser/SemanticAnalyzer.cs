@@ -53,12 +53,11 @@ namespace DaScript
                 string symbolName = varDeclNode.Variable.GetValue() as string;
                 ISymbol varSymbol = new VariableSymbol(symbolName, symbol);
 
-                if(!table.Define(varSymbol))
-                    throw new System.Exception($"Symbol with name <{symbolName}> has already been defined");
+                if (!table.Define(varSymbol))
+                    throw RaiseError(ScriptErrorCode.ID_ALREADY_DECLARED, varDeclNode.Variable.Token);
 
                 return;
             }
-            throw new System.Exception();
         }
 
         private void Visit_Id(Node node)
@@ -67,7 +66,7 @@ namespace DaScript
 
             if (!table.LookUp(name, out ISymbol symbol))
             {
-                throw new System.Exception($"Symbol with name <{name}> is undefined");
+                throw RaiseError(ScriptErrorCode.ID_NOT_FOUND, node.Token);
             }
 
         }
@@ -76,10 +75,7 @@ namespace DaScript
         {
             string name = node.children[0].GetValue() as string;
 
-            if (!table.LookUp(name, out ISymbol symbol))
-                throw new System.Exception($"Symbol with name <{name}> is undefined");
-            else
-                Visit_Expression(node.children[1]);
+            Visit_Expression(node.children[1]);
         }
 
         private void Visit_Expression(Node node)
@@ -92,6 +88,7 @@ namespace DaScript
                 case TokenType.MINUS:
                 case TokenType.MUL:
                 case TokenType.DIV:
+                case TokenType.ID:
                     Visit_ExpressionPart(node.children[0]);
                     Visit_ExpressionPart(node.children[1]);
                     break;

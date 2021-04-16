@@ -9,6 +9,8 @@ namespace DaScript
         public Token Token { get; private set; }
         public List<Node> children { get; protected set; } = new List<Node>();
 
+        public Node() { }
+
         public Node(Token token)
         {
             this.Token = token;

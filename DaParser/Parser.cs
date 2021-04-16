@@ -8,12 +8,6 @@ namespace DaScript
         private Token currentToken;
         private Lexer lexer = null;
 
-        private Dictionary<string, List<TokenType>> expectedTokens = new Dictionary<string, List<TokenType>>()
-        {
-            { "TERM", new List<TokenType>(){ TokenType.MINUS, TokenType.PLUS} },
-            { "FACTOR", new List<TokenType>(){ TokenType.MUL, TokenType.DIV, TokenType.EQUALS} },
-        };
-
         public Node Parse(Lexer lexer)
         {
             this.lexer = lexer;
@@ -41,7 +35,6 @@ namespace DaScript
                     }
                 }
             }
-            throw new ScriptException(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
 
         //Program : DeclarationBlock -> ProgramBlock*
@@ -64,7 +57,7 @@ namespace DaScript
         {
             Node node = Consume_Term();
 
-            while (expectedTokens["TERM"].Contains(currentToken.Type))
+            while(currentToken.Type == TokenType.PLUS || currentToken.Type == TokenType.MINUS)
             {
                 Token token = currentToken;
 
@@ -112,7 +105,7 @@ namespace DaScript
                 case TokenType.CALL:
                     return Consume_FunctionCall();
             }
-            throw new System.Exception();
+            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
 
         //Term : Factor -> ((Mul|Div) -> Factor)*
@@ -121,7 +114,9 @@ namespace DaScript
             Node node = Consume_Factor();
 
             Token token = currentToken;
-            while (expectedTokens["FACTOR"].Contains(currentToken.Type))
+            while (currentToken.Type == TokenType.MUL ||
+                currentToken.Type == TokenType.DIV ||
+                currentToken.Type == TokenType.EQUALS)
             {
                 switch (token.Type)
                 {
@@ -151,6 +146,7 @@ namespace DaScript
         }
 
         //FunctionBlock : LBlock -> BlockNode-> RBlock -> CompoundStatement -> End
+        //Create a statementlist for a whole block: [...] => statementList*
         private Node Consume_BlockDeclaration()
         {
             Token token = currentToken;
@@ -170,7 +166,7 @@ namespace DaScript
 
                     return blockVar;
             }
-            throw new System.Exception();
+            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
 
         //Block : Declaration|FunctionBlock
@@ -185,7 +181,7 @@ namespace DaScript
                 case TokenType.L_BLOCK:
                     return Consume_BlockDeclaration();
             }
-            throw new System.Exception();
+            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
 
         //CompundStatement : Statement*
@@ -252,7 +248,7 @@ namespace DaScript
                     Node node = new ConditionNode(token, value, left, right);
                     return node;
             }
-            throw new System.Exception();
+            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
 
         private Node Consume_FunctionCall()
@@ -308,7 +304,7 @@ namespace DaScript
             return new Node(token);
         }
 
-        //Id : 
+        //Id 
         private Node Consume_ID()
         {
             Token token = currentToken;
@@ -322,7 +318,7 @@ namespace DaScript
                     Node assign_right = Consume_Expression();
                     return new  Node(token, variable, assign_right);
             }
-            throw new System.Exception();
+            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
     }
 }

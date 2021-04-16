@@ -11,13 +11,14 @@ namespace DaScript
                 int i = 1;
                 double d = 2;
                 bool b = GetMeMyBool();
+                double d = 2;
 
                 [Start]
 
                     SetText('Hello Adventurer');
                     SetChoice('Show me your wares!', 'Wares');
 
-                    if(i =!= 2) then
+                    if(i == 2) then
                         SetChoice('I did not find this on the doorstep', 'Quest');
                     end
 
@@ -64,6 +65,11 @@ namespace DaScript
                 if (int.TryParse(Console.ReadLine(), out idx))
                     script.Interpreter.UpdateDialogue(idx);
             }
+        }
+
+        static void PrintError(string msg) 
+        {
+            Console.WriteLine($"======={msg}=======");
         }
     }
     
