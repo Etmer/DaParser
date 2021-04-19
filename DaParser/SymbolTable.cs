@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace DaScript
 {
@@ -13,32 +11,54 @@ namespace DaScript
         None
     }
 
-    public class SymbolTable
+    public class SymbolTable : ErrorRaiser
     {
+        private SymbolTable parentTable;
         private Dictionary<string, ISymbol> symbols = new Dictionary<string, ISymbol>();
         public SymbolTable() { DefineBuildInTypes(); }
 
         public bool Define(ISymbol symbol) 
         {
-            if (symbols.ContainsKey(symbol.Name))
-                return false;
-
-            symbols.Add(symbol.Name, symbol);
-            return true;
+            if (NotYetDeclared(symbol.Name))
+            {
+                symbols.Add(symbol.Name, symbol);
+                return true;
+            }
+            return false;
         }
 
         public bool LookUp(string name, out ISymbol symbol) 
         {
+            symbol = null;
             bool result = symbols.ContainsKey(name);
 
             if (result)
                 symbol = symbols[name];
             else
-                symbol = null;
+                result = parentTable.LookUp(name, out symbol);
 
             return result;
         }
 
+        /// <summary>
+        /// Returns true if symbol has not been declared in this or the parents symbol table
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        private bool NotYetDeclared(string name) 
+        {
+            if (parentTable != null)
+            {
+                if (parentTable.NotYetDeclared(name))
+                    return !symbols.ContainsKey(name);
+            }
+
+            return !symbols.ContainsKey(name); ;
+        }
+
+        /// <summary>
+        /// built in types are: string, double, int and bool
+        /// </summary>
         private void DefineBuildInTypes() 
         {
             Define(new IntegerSymbol("int"));

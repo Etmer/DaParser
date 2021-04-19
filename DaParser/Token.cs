@@ -42,7 +42,15 @@ namespace DaScript
 
         TYPESPEC, // => Integer, string bool, double
 
-        EOF
+        EOF,
+
+        //Dialogue specific types
+        MEMBERDELIMITER_LEFT, // => {
+        MEMBERDELIMITER_RIGHT, // => }
+        TEXT_MEMBER,
+        CHOICE_MEMBER,
+        TRANSFER, // => arrow(=>)
+
     }
     public struct Token
     {

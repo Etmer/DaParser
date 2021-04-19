@@ -3,10 +3,11 @@ using System.Text;
 
 namespace DaScript
 {
-    public class Tokenizer : InterpreterStep
+    public class Tokenizer : ErrorRaiser
     {
         private const char STRING_DELIMETER = '\'';
         private const char EQUALSIGN = '=';
+        private const char ARROW = '>';
 
         private string sourceString;
 
@@ -23,6 +24,12 @@ namespace DaScript
 
         private List<TokenMatcher> tokenMatchers = new List<TokenMatcher>()
         {
+            //Dialogue specific
+            { new TokenMatcher(TokenType.MEMBERDELIMITER_LEFT, @"(\{)")},
+            { new TokenMatcher(TokenType.MEMBERDELIMITER_RIGHT, @"(\})")},
+            { new TokenMatcher(TokenType.TRANSFER, @"(\=>)" )},
+
+            //base
             { new TokenMatcher(TokenType.FUNC, @"\b(function)\b")},
 
             { new TokenMatcher(TokenType.L_BLOCK, @"(\[)")},
@@ -46,6 +53,11 @@ namespace DaScript
         };
         private Dictionary<string, TokenType> keywords = new Dictionary<string, TokenType>()
         {
+            //Dialogue specific
+            { "Text", TokenType.TEXT_MEMBER },
+            { "Choice", TokenType.CHOICE_MEMBER },
+
+            //base
             { "if", TokenType.CONDITION },
             { "else", TokenType.ELSE },
             { "elif", TokenType.ELSEIF },
@@ -234,7 +246,7 @@ namespace DaScript
             {
                 itrChar = PeekNextChar(input);
 
-                if (itrChar.Value == EQUALSIGN)
+                if (itrChar.Value == EQUALSIGN || itrChar.Value == ARROW)
                 {
                     sBuilder.Append(itrChar.Value);
                     index++;

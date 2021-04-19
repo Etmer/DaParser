@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace DaScript
 {
-    public class Parser : InterpreterStep
+    public class Parser : ErrorRaiser
     {
         private Token currentToken;
         private Lexer lexer = null;
@@ -35,6 +35,8 @@ namespace DaScript
                     }
                 }
             }
+
+            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
 
         //Program : DeclarationBlock -> ProgramBlock*
@@ -57,7 +59,7 @@ namespace DaScript
         {
             Node node = Consume_Term();
 
-            while(currentToken.Type == TokenType.PLUS || currentToken.Type == TokenType.MINUS)
+            while (currentToken.Type == TokenType.PLUS || currentToken.Type == TokenType.MINUS)
             {
                 Token token = currentToken;
 
@@ -104,6 +106,13 @@ namespace DaScript
                     return stringValue;
                 case TokenType.CALL:
                     return Consume_FunctionCall();
+
+                //Dialogue specific
+                case TokenType.CHOICE_MEMBER:
+                case TokenType.TEXT_MEMBER:
+                    Node member = Consume_TextMember();
+                    return member;
+
             }
             throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
@@ -247,6 +256,10 @@ namespace DaScript
 
                     Node node = new ConditionNode(token, value, left, right);
                     return node;
+                case TokenType.MEMBERDELIMITER_LEFT:
+                    Node dialogueMember = Consume_DialogueMember();
+                    Consume(TokenType.SEMI);
+                    return dialogueMember;
             }
             throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
@@ -270,7 +283,7 @@ namespace DaScript
             return call;
         }
 
-        private Node Consume_Then() 
+        private Node Consume_Then()
         {
             Token token = currentToken;
             Consume(TokenType.THEN);
@@ -280,7 +293,7 @@ namespace DaScript
         private Node Consume_Else()
         {
             Token token = currentToken;
-            switch (token.Type) 
+            switch (token.Type)
             {
                 case TokenType.ELSEIF:
                     return Consume_Statement();
@@ -288,7 +301,7 @@ namespace DaScript
                     Consume(TokenType.ELSE);
                     Node node = Consume_CompoundStatement();
                     Consume(TokenType.END);
-                    return  node;
+                    return node;
                 case TokenType.END:
                     Consume(TokenType.END);
                     return new Node(token);
@@ -310,15 +323,72 @@ namespace DaScript
             Token token = currentToken;
             Node variable = Consume_Variable();
 
-            switch (currentToken.Type) 
+            switch (currentToken.Type)
             {
                 case TokenType.ASSIGN:
                     token = currentToken;
                     Consume(TokenType.ASSIGN);
                     Node assign_right = Consume_Expression();
-                    return new  Node(token, variable, assign_right);
+                    return new Node(token, variable, assign_right);
             }
             throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
+        }
+
+        //Dialogue specific
+        private Node Consume_DialogueMember()
+        {
+            Consume(TokenType.MEMBERDELIMITER_LEFT);
+            Token token = currentToken;
+
+            switch (token.Type)
+            {
+                case TokenType.TEXT_MEMBER:
+                    return Consume_DialogueText();
+                case TokenType.CHOICE_MEMBER:
+                    return Consume_DialogueChoice();
+            }
+            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
+        }
+
+        //hm
+        private Node Consume_DialogueText()
+        {
+            Token token = currentToken;
+
+            Node textMemberNode = Consume_Expression();
+
+            switch (currentToken.Type) 
+            {
+                case TokenType.TRANSFER:
+                    Consume(TokenType.TRANSFER);
+                    Node next = Consume_Factor(); 
+                    return new Node(token, textMemberNode, next);
+            }
+
+            return new Node(token, textMemberNode);
+        }
+
+        private Node Consume_DialogueChoice()
+        {
+            Token token = currentToken;
+
+            Node textMemberNode = Consume_Expression();
+
+            Consume(TokenType.TRANSFER);
+            Node next = Consume_Factor();
+
+            return new Node(token, textMemberNode, next);
+        }
+
+        private Node Consume_TextMember()
+        {
+            Token token = currentToken;
+
+            Consume(TokenType.TEXT_MEMBER, TokenType.CHOICE_MEMBER);
+            Consume(TokenType.MEMBERDELIMITER_RIGHT);
+            Consume(TokenType.ASSIGN);
+
+            return Consume_Expression();
         }
     }
 }

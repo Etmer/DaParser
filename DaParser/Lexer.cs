@@ -2,7 +2,7 @@
 
 namespace DaScript
 {
-    public class Lexer : InterpreterStep
+    public class Lexer : ErrorRaiser
     {
         private int index = 0;
         private Tokenizer tokenizer = new Tokenizer();

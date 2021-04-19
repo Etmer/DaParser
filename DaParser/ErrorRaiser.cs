@@ -2,7 +2,7 @@
 
 namespace DaScript
 {
-    public class InterpreterStep
+    public class ErrorRaiser
     {
         public enum ScriptErrorCode
         {

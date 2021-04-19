@@ -15,12 +15,14 @@ namespace DaScript
         {
             this.Token = token;
         }
-        public Node(Token token, Node left, Node right)
+        public Node(Token token, params Node[] child)
         {
             this.Token = token;
 
-            children.Add(left);
-            children.Add(right);
+            foreach (Node node in child)
+            {
+                children.Add(node);
+            }
         }
         public virtual object GetValue() { return Token.GetValue(); }
     }
@@ -54,7 +56,7 @@ namespace DaScript
             Callee = callee;
         }
 
-        public void AddArgument(Node argument) 
+        public void AddArgument(Node argument)
         {
             Arguments.Add(argument);
         }
@@ -81,7 +83,7 @@ namespace DaScript
             return children[0].GetValue();
         }
     }
-   
+
     public class UnaryNode : Node
     {
         public TokenType op { get; private set; }
@@ -91,6 +93,4 @@ namespace DaScript
             children.Add(value);
         }
     }
-
-
 }

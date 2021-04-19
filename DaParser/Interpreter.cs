@@ -4,15 +4,15 @@ using System.Text;
 
 namespace DaScript
 {
-    public class Interpreter : IVisitor
+    public class Interpreter : ErrorRaiser, IVisitor
     {
-        protected Table GlobalMemory = new Table();
+        protected Memory GlobalMemory = new Memory();
         private Node tree = null;
         private SymbolTable symbolTable;
 
         public Interpreter() { }
 
-        public void SetTree(Node node) 
+        public void SetTree(Node node)
         {
             tree = node;
         }
@@ -21,7 +21,7 @@ namespace DaScript
             symbolTable = table;
         }
 
-        public void Interpret() 
+        public void Interpret()
         {
             Visit(tree);
         }
@@ -68,15 +68,21 @@ namespace DaScript
                 case TokenType.TYPESPEC:
                     result = Visit_VariableDeclarationNode(node);
                     break;
+                case TokenType.TEXT_MEMBER:
+                    result = Visit_TextMemberNode(node);
+                    break;
+                case TokenType.CHOICE_MEMBER:
+                    result = Visit_TextChoiceNode(node);
+                    break;
             }
             return result;
         }
 
-        private object Visit_CompoundNode(Node node) 
+        private object Visit_CompoundNode(Node node)
         {
             CompundStatementNode c_node = node as CompundStatementNode;
 
-            foreach (Node n in c_node.statementList) 
+            foreach (Node n in c_node.statementList)
             {
                 Visit(n);
             }
@@ -96,7 +102,7 @@ namespace DaScript
 
             List<object> arguments = new List<object>();
 
-            foreach (Node argument in funcCall.Arguments) 
+            foreach (Node argument in funcCall.Arguments)
             {
                 object value = Visit(argument);
                 arguments.Add(value);
@@ -117,7 +123,7 @@ namespace DaScript
         private object Visit_MainNode(Node node)
         {
             CompundStatementNode program = node as CompundStatementNode;
-            foreach (Node statementNode in program.statementList) 
+            foreach (Node statementNode in program.statementList)
             {
                 Visit(statementNode);
             }
@@ -130,7 +136,7 @@ namespace DaScript
 
             if (node.Token.Type != TokenType.L_BLOCK)
                 GlobalMemory[name] = Visit(node.children[1]);
-            else 
+            else
             {
                 GlobalMemory[name] = node;
             }
@@ -158,10 +164,10 @@ namespace DaScript
 
                     return lhs.Equals(rhs);
             }
-            throw OnError(token.Type);
+            throw new System.Exception();
         }
 
-        private object Visit_NumberNode(Node node) 
+        private object Visit_NumberNode(Node node)
         {
             return (double)node.GetValue();
         }
@@ -174,21 +180,21 @@ namespace DaScript
         private object Visit_UnaryNode(Node node)
         {
             Token token = node.Token;
-            switch (token.Type) 
+            switch (token.Type)
             {
                 case TokenType.PLUS:
                     return +(double)Visit(node.children[0]);
                 case TokenType.MINUS:
                     return -(double)Visit(node.children[0]);
             }
-            throw OnError(token.Type);
+            throw new System.Exception();
         }
 
         private object Visit_ConditionNode(Node node)
         {
             Token token = node.Token;
 
-            switch (token.Type) 
+            switch (token.Type)
             {
                 case TokenType.CONDITION:
                 case TokenType.ELSEIF:
@@ -196,7 +202,7 @@ namespace DaScript
 
                     if (value)
                         return Visit_CompoundNode(node.children[1]);
-                    else 
+                    else
                         return Visit_ConditionNode(node.children[2]);
                 case TokenType.ELSE:
                     return Visit_CompoundNode(node.children[0]);
@@ -212,9 +218,26 @@ namespace DaScript
             return Visit(node.children[0]);
         }
 
-        private System.Exception OnError(TokenType type) 
+        private object Visit_TextMemberNode(Node node)
         {
-            return new System.Exception($"Expected to handle Unary Node! Unexpected tokentype: {type}");
+            Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
+
+            string text = (string)Visit(node.children[0]);
+
+            dialogue.SetText(text);
+
+            return 1;
+        }
+        private object Visit_TextChoiceNode(Node node)
+        {
+            Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
+
+            string text = (string)Visit(node.children[0]);
+            string next = (string)Visit(node.children[1]);
+
+            dialogue.SetOption(text, next);
+
+            return 1;
         }
     }
 }

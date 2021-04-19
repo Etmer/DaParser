@@ -11,10 +11,7 @@ namespace DaScript
 
         public DialogueInterpreter() : base() 
         {
-            GlobalMemory["SetText"] = (System.Action<string>)SetText;
-            GlobalMemory["SetChoice"] = (System.Action<string,string>)SetChoice;
-            GlobalMemory["GoTo"] = (System.Action<string>)EnterBlockNode;
-            GlobalMemory["GetMeMyBool"] = (System.Func<bool>)GetMeMyBool;
+            GlobalMemory["Dialogue"] = new Dialogue(5);
         }
 
 

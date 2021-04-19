@@ -4,9 +4,9 @@ using System.Text;
  
 namespace DaScript
 {
-    public class Table
+    public class Memory
     {
-        private Table parent;
+        private Memory parent;
         private Dictionary<string, object> memory = new Dictionary<string, object>();
 
         public object this[string index]
