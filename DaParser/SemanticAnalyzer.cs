@@ -6,17 +6,17 @@ namespace DaScript
 {
     class SemanticAnalyzer : ErrorRaiser
     {
-        private SymbolTable table;
+        private SymbolTable currentTable;
         public SymbolTable Analyze(Node node)
         {
-            table = new SymbolTable();
+            currentTable = new SymbolTable();
 
             CompundStatementNode compundNode = node as CompundStatementNode;
 
             foreach (Node statement in compundNode.statementList)
                 Visit(statement);
 
-            return table;
+            return currentTable;
         }
 
         private void Visit(Node node)
@@ -29,10 +29,7 @@ namespace DaScript
                     Visit_VariableDeclaration(node);
                     break;
                 case TokenType.L_BLOCK:
-                    CompundStatementNode compundNode = node as CompundStatementNode;
-
-                    foreach (Node statement in compundNode.statementList)
-                        Visit(statement);
+                    Visit_BlockNode(node);
                     break;
                 case TokenType.ASSIGN:
                     Visit_AssignNode(node);
@@ -42,35 +39,49 @@ namespace DaScript
                     break;
             }
         }
+
         private void Visit_VariableDeclaration(Node node)
         {
-            VariableDeclarationNode varDeclNode = node as VariableDeclarationNode;
+            Node assignment = node.children[0];
+            Node variable = assignment.children[0];
 
             string type = (string)node.Token.Value;
 
-            if (table.LookUp(type, out ISymbol symbol))
+            if (currentTable.LookUp(type, out ISymbol symbol))
             {
-                string symbolName = varDeclNode.Variable.GetValue() as string;
+                string symbolName = variable.GetValue() as string;
                 ISymbol varSymbol = new VariableSymbol(symbolName, symbol);
 
-                if (!table.Define(varSymbol))
-                    throw RaiseError(ScriptErrorCode.ID_ALREADY_DECLARED, varDeclNode.Variable.Token);
+                if (!currentTable.Define(varSymbol))
+                    throw RaiseError(ScriptErrorCode.ID_ALREADY_DECLARED, variable.Token);
 
                 return;
             }
+            throw RaiseError(ScriptErrorCode.UNDEFINED_SYMBOL, variable.Token);
         }
 
         private void Visit_Id(Node node)
         {
             string name = node.GetValue() as string;
 
-            if (!table.LookUp(name, out ISymbol symbol))
-            {
+            if (!currentTable.LookUp(name, out ISymbol symbol))
                 throw RaiseError(ScriptErrorCode.ID_NOT_FOUND, node.Token);
-            }
-
         }
 
+        private void Visit_BlockNode(Node node) 
+        {
+            CompundStatementNode compundNode = node as CompundStatementNode;
+
+            SymbolTable table = new SymbolTable(currentTable);
+            table.DefineDialogueSymbols();
+            currentTable = table;
+         
+            foreach (Node statement in compundNode.statementList)
+                Visit_StatementNode(statement);
+
+            currentTable = currentTable.ParentTable;
+        }
+        
         private void Visit_AssignNode(Node node)
         {
             string name = node.children[0].GetValue() as string;
@@ -111,6 +122,25 @@ namespace DaScript
                     Visit_Expression(node);
                     break;
             }
+        }
+        private void Visit_StatementNode(Node node)
+        {
+            Token token = node.Token;
+
+            switch (token.Type) 
+            {
+                case TokenType.TEXT_MEMBER:
+                    Visit_TexMemberNode(node);
+                    break;
+            }
+        }
+
+        private void Visit_TexMemberNode(Node node)
+        {
+        }
+
+        private void Visit_ChoiceMemberNode(Node node)
+        {
         }
     }
 }

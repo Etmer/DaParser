@@ -13,9 +13,10 @@ namespace DaScript
 
     public class SymbolTable : ErrorRaiser
     {
-        private SymbolTable parentTable;
+        public SymbolTable ParentTable { get; private set; }
         private Dictionary<string, ISymbol> symbols = new Dictionary<string, ISymbol>();
         public SymbolTable() { DefineBuildInTypes(); }
+        public SymbolTable(SymbolTable parent) { ParentTable = parent; }
 
         public bool Define(ISymbol symbol) 
         {
@@ -34,10 +35,16 @@ namespace DaScript
 
             if (result)
                 symbol = symbols[name];
-            else
-                result = parentTable.LookUp(name, out symbol);
+            else if(ParentTable != null)
+                result = ParentTable.LookUp(name, out symbol);
 
             return result;
+        }
+
+        public void DefineDialogueSymbols()
+        {
+            Define(new ChoiceSymbol("Choice"));
+            Define(new TextSymbol("Text"));
         }
 
         /// <summary>
@@ -47,9 +54,9 @@ namespace DaScript
         /// <returns></returns>
         private bool NotYetDeclared(string name) 
         {
-            if (parentTable != null)
+            if (ParentTable != null)
             {
-                if (parentTable.NotYetDeclared(name))
+                if (ParentTable.NotYetDeclared(name))
                     return !symbols.ContainsKey(name);
             }
 
@@ -119,5 +126,15 @@ namespace DaScript
         {
             Type = type;
         }
+    }
+
+    public class TextSymbol : BuiltInSymbol
+    {
+        public TextSymbol(string name) : base(name) { }
+    }
+
+    public class ChoiceSymbol : BuiltInSymbol
+    {
+        public ChoiceSymbol(string name) : base(name) { }
     }
 }

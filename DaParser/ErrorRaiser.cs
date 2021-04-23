@@ -8,14 +8,15 @@ namespace DaScript
         {
             UNEXPECTED_TOKEN,
             ID_NOT_FOUND,
-            ID_ALREADY_DECLARED
+            ID_ALREADY_DECLARED,
+            UNDEFINED_SYMBOL
         }
 
         protected virtual Exception RaiseError(ScriptErrorCode errorCode, Token token) 
         {
             string message = "Unknown Error";
 
-            switch (errorCode) 
+            switch (errorCode)
             {
                 case ScriptErrorCode.ID_NOT_FOUND:
                     message = $"Semantic Error: Undeclared ID: {token.GetValue()} at {token.Line}.{token.Column}";
@@ -25,6 +26,9 @@ namespace DaScript
                     break;
                 case ScriptErrorCode.UNEXPECTED_TOKEN:
                     message = $"Parsing Error: Unexpected Token: {token.Type} at {token.Line}.{token.Column}";
+                    break;
+                case ScriptErrorCode.UNDEFINED_SYMBOL:
+                    message = $"Semantic Error: Undefined symbol: {token.Type} at {token.Line}.{token.Column}";
                     break;
             }
             return new System.Exception(message);

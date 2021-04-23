@@ -24,6 +24,12 @@ namespace DaScript
                 children.Add(node);
             }
         }
+
+        public void Add(Node node) 
+        {
+            children.Add(node);
+        }
+
         public virtual object GetValue() { return Token.GetValue(); }
     }
     public class ConditionNode : Node

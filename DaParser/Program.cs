@@ -6,10 +6,13 @@ namespace DaScript
     {
         static string s =
 @"        program
-               
+
+                double d = 1;
                 [Start]
-                    {Text} = 'Hello';
-                    {Choice} = 'good day' => 'Wares';
+                    {Text} = 'Hello' => 
+                        {Choice} = 'Ne' => 'Wares'
+                        {Choice} = 'Ge' => 'Wares'
+                        {Choice} = 'Be' => 'Wares';
                 end
 
                 [Wares]

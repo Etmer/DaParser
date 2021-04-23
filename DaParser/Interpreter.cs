@@ -69,11 +69,8 @@ namespace DaScript
                     result = Visit_VariableDeclarationNode(node);
                     break;
                 case TokenType.TEXT_MEMBER:
-                    result = Visit_TextMemberNode(node);
-                    break;
-                case TokenType.CHOICE_MEMBER:
-                    result = Visit_TextChoiceNode(node);
-                    break;
+                    result = Visit_DialogueNode(node);
+                    break;;
             }
             return result;
         }
@@ -218,16 +215,37 @@ namespace DaScript
             return Visit(node.children[0]);
         }
 
-        private object Visit_TextMemberNode(Node node)
+        private object Visit_DialogueNode(Node node)
         {
-            Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
-
-            string text = (string)Visit(node.children[0]);
-
-            dialogue.SetText(text);
+            foreach(Node subNode in node.children)
+                Visit_DialogueMember(subNode);
 
             return 1;
         }
+        private object Visit_DialogueMember(Node node)
+        {
+            Token token = node.Token;
+
+            switch (token.Type) 
+            {
+                case TokenType.TEXT_MEMBER:
+                    return Visit_TextNode(node);
+                case TokenType.CHOICE_MEMBER:
+                    return Visit_TextChoiceNode(node);
+                case TokenType.TRANSFER:
+                    return Visit_TextChoiceNode(node);
+            }
+            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
+        }
+
+
+        private object Visit_TextNode(Node node)
+        {
+            Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
+
+
+        }
+
         private object Visit_TextChoiceNode(Node node)
         {
             Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
@@ -238,6 +256,12 @@ namespace DaScript
             dialogue.SetOption(text, next);
 
             return 1;
+        }
+        private object Visit_TransferNode(Node node)
+        {
+            Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
+
+
         }
     }
 }
