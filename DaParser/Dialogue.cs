@@ -6,28 +6,31 @@ namespace DaScript
 {
     public class Dialogue
     {
-        public List<DialogueOption> choices;
-
-        private string defaultExit = null;
-        private int index = 0;
-
-        public Dialogue(int choiceAmount) 
-        {
-            choices = new List<DialogueOption>();
-            for (int i = 0; i < choiceAmount; i++)
-                choices.Add(new DialogueOption());
-        }
-
-        public Dialogue()
-        {
-            choices = new List<DialogueOption>();
-        }
-
-
         /// <summary>
         /// The displayed text of the dialogue
         /// </summary>
         public string Text { get; private set; }
+        public List<DialogueOption> Choices;
+
+        private DialoguePointer dialoguePointer = new DialoguePointer();
+        private int index = 0;
+
+        public Dialogue(int choiceAmount) 
+        {
+            Choices = new List<DialogueOption>();
+            for (int i = 0; i < choiceAmount; i++)
+                Choices.Add(new DialogueOption());
+        }
+
+        public Dialogue()
+        {
+            Choices = new List<DialogueOption>();
+        }
+
+        public DialogueOption GetChoice(int index) 
+        {
+            return Choices[index];
+        }
 
         public void SetText(string text) { Text = text; }
 
@@ -38,24 +41,24 @@ namespace DaScript
         /// <param name="next"></param>
         public void SetOption(string text, string next, bool createIfNotExist = true)
         {
-            if (index > choices.Count)
+            if (index > Choices.Count)
                 if (createIfNotExist)
                 {
                     DialogueOption newOption = new DialogueOption();
                     newOption.Set(text, next);
                 }
 
-            DialogueOption option = choices[index++];
+            DialogueOption option = Choices[index++];
             option.Set(text, next);
         }
 
         /// <summary>
-        /// Sets the name of the node that follows ifno choicesare available
+        /// Sets the name of the node that follows if no choices are available
         /// </summary>
         /// <param name="value"></param>
-        public void SetDefaultExit(string value) 
+        public void SetNext(string value, DialogueExitMode exitMode) 
         {
-            defaultExit = value;
+            dialoguePointer.Set(value, exitMode);
         }
 
         /// <summary>
@@ -65,9 +68,9 @@ namespace DaScript
         {
             index = 0;
             Text = "";
-            defaultExit = null;
+            dialoguePointer.Reset();
 
-            foreach (DialogueOption choice in choices)
+            foreach (DialogueOption choice in Choices)
                 choice.Reset();
         }
     }
@@ -90,10 +93,36 @@ namespace DaScript
             Text = text;
             Next = next;
         }
+
         public void Reset() 
         { 
             Text = "";
             Next = "";
         }
+    }
+
+    public class DialoguePointer 
+    {
+        public DialogueExitMode ExitMode { get; private set; }
+        public string Next { get; private set; } = null;
+
+        public void Set(string next, DialogueExitMode exitMode) 
+        {
+            Next = next;
+            ExitMode = exitMode;
+        }
+
+        public void Reset() 
+        {
+            ExitMode = DialogueExitMode.INVALID;
+            Next = null;
+        }
+    }
+
+    public enum DialogueExitMode 
+    {
+        INVALID,
+        End,
+        Running
     }
 }

@@ -28,11 +28,7 @@ namespace DaScript
                         currentToken = lexer.GetNextToken();
                         return;
                     }
-                    else
-                    {
-                        Console.WriteLine("Program terminated successfully.");
-                        return;
-                    }
+                    return;
                 }
             }
 
@@ -387,6 +383,9 @@ namespace DaScript
                      return new Node(token,Consume_Factor());
                 case TokenType.MEMBERDELIMITER_LEFT:
                     return new Node(token,Consume_Choices());
+                case TokenType.END:
+                    return new Node(token,Consume_EndDialogueToken());
+
             }
 
             throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
@@ -408,6 +407,14 @@ namespace DaScript
         {
             Consume(TokenType.MEMBERDELIMITER_LEFT);
             return Consume_DialogueDeclaration();
+        }
+
+        private Node Consume_EndDialogueToken() 
+        {
+            Token token = currentToken;
+            Consume(TokenType.END);
+
+            return new Node(token);
         }
         #endregion
 

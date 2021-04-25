@@ -12,17 +12,20 @@ namespace DaScript
         private Parser parser;
         private SemanticAnalyzer analyzer;
 
-        public void Parse(string input) 
+        public Script()
         {
             lexer = new Lexer();
             parser = new Parser();
             analyzer = new SemanticAnalyzer();
-            lexer.Tokenize(input);
+            Interpreter = new T();
 
+        }
+        public void Parse(string input)
+        {
+            lexer.Tokenize(input);
             Node node = parser.Parse(lexer);
             SymbolTable table = analyzer.Analyze(node);
 
-            Interpreter = new T();
             Interpreter.SetSymbolTable(table);
             Interpreter.SetTree(node);
         }

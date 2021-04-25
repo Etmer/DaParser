@@ -6,62 +6,57 @@ namespace DaScript
 {
     public class DialogueInterpreter : Interpreter
     {
+        public event System.Action<string, List<DialogueOption>> OnStart;
+        public event System.Action<string, List<DialogueOption>> OnUpdate;
+        public event System.Action OnEnd;
+
         public System.Action<ErrorCode> OnError;
-        public Dialogue currentDialogue { get; private set; } = new Dialogue(5);
+        private Dialogue dialogue { get; set; } = new Dialogue(5);
 
-        public DialogueInterpreter() : base() 
+        public DialogueInterpreter() : base()
         {
-            GlobalMemory["Dialogue"] = new Dialogue(5);
+            GlobalMemory["Dialogue"] = dialogue;
         }
 
-
-        private bool GetMeMyBool()
-        {
-            return true;
-        }
-        public void StartDialogue() 
+        public void Start() 
         {
             Interpret();
             EnterBlockNode("Start");
-            Print();
-        }
+            OnStart?.Invoke(dialogue.Text,dialogue.Choices);
 
-        public void UpdateDialogue(int choiceIdx)
-        {
-            if (choiceIdx < currentDialogue.choices.Count)
+            while (true) 
             {
-                string block = currentDialogue.choices[choiceIdx].Next;
-                if (!string.IsNullOrEmpty(block))
-                {
-                    currentDialogue.Reset();
-                    EnterBlockNode(block);
-                    Print();
-                    return;
-                }
+                int index = int.Parse(Console.ReadLine());
+                SelectChoice(index);
             }
-            
-            OnError?.Invoke(ErrorCode.NoChoiceForInput);
         }
 
-        private void SetText(string text) 
+        public void SelectChoice(int index) 
         {
-            currentDialogue.SetText(text);
+            DialogueOption choice = dialogue.GetChoice(index);
+            string next = choice.Next;
+
+            dialogue.Reset();
+            EnterBlockNode(next);
+            Update();
         }
 
-        private void SetChoice(string text, string next)
+        private void Update()
         {
-            currentDialogue.SetOption(text, next);
+            OnUpdate?.Invoke(dialogue.Text, dialogue.Choices);
         }
 
-        private void Print() 
+        private void End() 
         {
-            Console.WriteLine(currentDialogue.Text);
+            OnEnd?.Invoke();
+        }
 
-            foreach (DialogueOption option in currentDialogue.choices) 
-            {
-                if(option.HasInfo)
-                    Console.WriteLine($"{"++++"} {option.Text} {"++++"}");
-            }
+        private void Print(string text, List<DialogueOption> choices) 
+        {
+            Console.WriteLine(text);
+
+            foreach (DialogueOption choice in choices)
+                Console.WriteLine($"+++++{choice.Text}+++++");
         }
 
     }

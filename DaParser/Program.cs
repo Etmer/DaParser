@@ -1,25 +1,47 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace DaScript
 {
     class Program
     {
+        private static Script<DialogueInterpreter> script = new Script<DialogueInterpreter>();
+
         static string s =
 @"        program
 
-                double d = 1;
                 [Start]
-                    {Text} = 'Hello' => 'Wares';
+                    {Text} = 'Hello' => 
+                        {Choice} = 'Good day Sir!' => 'Default'
+                        {Choice} = 'Go die in a Pit!' => 'Unfriendly';
                 end
 
-                [Wares]
-                    {Text} = 'Go away' => 'Quest';
+                [Default]
+                    {Text} = 'What can I do for you?' => 
+                        {Choice} = 'I want to buy potions' => 'Buy'
+                        {Choice} = 'I want to sell potions' => 'Sell'
+                        {Choice} = 'Goodbye for now!' => 'End';
+                end
+
+
+                [Sell]
+                    {Text} = 'I will have a look at your wares!' => 
+                        {Choice} = 'I changed my mind since I do not have potions' => 'Default';
                 end  
                 
-                [Quest]
-                    GoTo('MyNextName');
-                end
+                [Buy]
+                    {Text} = 'Have a look!' => 
+                        {Choice} = 'Health Potion' => 'Default'
+                        {Choice} = 'Mana Potion' => 'Default';
+                end  
 
+                [Unfriendly]
+                    {Text} = 'Go away' => end;
+                end    
+                
+                [End]
+                    {Text} = 'Goodbye' => end;
+                end  
         ";
 
 
@@ -30,22 +52,24 @@ namespace DaScript
 
         static void ProcessSourcestring(string input)
         {
-            Script<DialogueInterpreter> script = new Script<DialogueInterpreter>();
-            script.Parse(input);
-            script.Interpreter.StartDialogue();
+            script.Interpreter.OnStart += Print;
+            script.Interpreter.OnUpdate += Print;
 
-            while (true)
+            script.Parse(input);
+            script.Interpreter.Start();
+        }
+
+        static void Print(string text, List<DialogueOption> choices) 
+        {
+            Console.WriteLine($"Text: {text}");
+
+            foreach (DialogueOption choice in choices)
             {
-                int idx = 0;
-                if (int.TryParse(Console.ReadLine(), out idx))
-                    script.Interpreter.UpdateDialogue(idx);
+                if(choice.HasInfo)
+                    Console.WriteLine($"Choice: {choice.Text}");
             }
         }
 
-        static void PrintError(string msg) 
-        {
-            Console.WriteLine($"======={msg}=======");
-        }
     }
     
 }

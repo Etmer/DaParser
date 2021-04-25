@@ -254,7 +254,7 @@ namespace DaScript
         {
             Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
 
-            string text = (string)Visit(node.children[0]); 
+            string text = (string)Visit(node.children[0]);
             string next = (string)Visit_TransferNode(node.children[1]);
 
             dialogue.SetOption(text, next);
@@ -273,8 +273,7 @@ namespace DaScript
                         Visit_TextChoiceNode(subNode);
                     break;
                 case TokenType.STRING:
-                    dialogue.SetDefaultExit((string)Visit(node));
-                    break;
+                    return Visit(node);
             }
 
             return 1;
@@ -286,7 +285,6 @@ namespace DaScript
             Token token = next.Token;
 
             return Visit_ChoiceBlock(next);
-            return 1;
         }
     }
 }
