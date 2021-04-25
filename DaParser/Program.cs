@@ -9,10 +9,7 @@ namespace DaScript
 
                 double d = 1;
                 [Start]
-                    {Text} = 'Hello' => 
-                        {Choice} = 'Ne' => 'Wares'
-                        {Choice} = 'Ge' => 'Wares'
-                        {Choice} = 'Be' => 'Wares';
+                    {Text} = 'Hello' => 'Wares';
                 end
 
                 [Wares]

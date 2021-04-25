@@ -228,12 +228,12 @@ namespace DaScript
 
             switch (token.Type) 
             {
-                case TokenType.TEXT_MEMBER:
+                case TokenType.STRING:
                     return Visit_TextNode(node);
                 case TokenType.CHOICE_MEMBER:
                     return Visit_TextChoiceNode(node);
                 case TokenType.TRANSFER:
-                    return Visit_TextChoiceNode(node);
+                    return Visit_TransferNode(node);
             }
             throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
@@ -243,6 +243,10 @@ namespace DaScript
         {
             Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
 
+            string text = (string)node.GetValue();
+            dialogue.SetText(text);
+
+            return 1;
 
         }
 
@@ -250,18 +254,39 @@ namespace DaScript
         {
             Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
 
-            string text = (string)Visit(node.children[0]);
-            string next = (string)Visit(node.children[1]);
+            string text = (string)Visit(node.children[0]); 
+            string next = (string)Visit_TransferNode(node.children[1]);
 
             dialogue.SetOption(text, next);
 
             return 1;
         }
-        private object Visit_TransferNode(Node node)
+        private object Visit_ChoiceBlock(Node node)
         {
             Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
+            Token token = node.Token;
 
+            switch (token.Type)
+            {
+                case TokenType.MEMBERDELIMITER_LEFT:
+                    foreach (Node subNode in node.children)
+                        Visit_TextChoiceNode(subNode);
+                    break;
+                case TokenType.STRING:
+                    dialogue.SetDefaultExit((string)Visit(node));
+                    break;
+            }
 
+            return 1;
+        }
+
+        private object Visit_TransferNode(Node node)
+        {
+            Node next = node.children[0];
+            Token token = next.Token;
+
+            return Visit_ChoiceBlock(next);
+            return 1;
         }
     }
 }

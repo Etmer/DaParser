@@ -384,8 +384,7 @@ namespace DaScript
             switch (currentToken.Type) 
             {
                 case TokenType.STRING:
-                    Consume(TokenType.STRING);
-                    return new Node(token, new Node(currentToken));
+                     return new Node(token,Consume_Factor());
                 case TokenType.MEMBERDELIMITER_LEFT:
                     return new Node(token,Consume_Choices());
             }

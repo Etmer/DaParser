@@ -7,6 +7,8 @@ namespace DaScript
     public class Dialogue
     {
         public List<DialogueOption> choices;
+
+        private string defaultExit = null;
         private int index = 0;
 
         public Dialogue(int choiceAmount) 
@@ -48,12 +50,22 @@ namespace DaScript
         }
 
         /// <summary>
+        /// Sets the name of the node that follows ifno choicesare available
+        /// </summary>
+        /// <param name="value"></param>
+        public void SetDefaultExit(string value) 
+        {
+            defaultExit = value;
+        }
+
+        /// <summary>
         /// Resets dialogue text and all options
         /// </summary>
         public void Reset() 
         {
             index = 0;
             Text = "";
+            defaultExit = null;
 
             foreach (DialogueOption choice in choices)
                 choice.Reset();
