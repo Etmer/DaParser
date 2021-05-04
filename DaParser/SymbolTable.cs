@@ -45,6 +45,7 @@ namespace DaScript
         {
             Define(new ChoiceSymbol("Choice"));
             Define(new TextSymbol("Text"));
+            Define(new DialogueSymbol());
         }
 
         /// <summary>
@@ -136,5 +137,10 @@ namespace DaScript
     public class ChoiceSymbol : BuiltInSymbol
     {
         public ChoiceSymbol(string name) : base(name) { }
+    }
+
+    public class DialogueSymbol : BuiltInSymbol
+    {
+        public DialogueSymbol() : base("Dialogue") { }
     }
 }

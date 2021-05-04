@@ -6,28 +6,32 @@ namespace DaScript
 {
     public class Dialogue
     {
+        public event System.Action DialogueEndEventHandler;
+
         /// <summary>
         /// The displayed text of the dialogue
         /// </summary>
         public string Text { get; private set; }
-        public List<DialogueOption> Choices;
 
-        private DialoguePointer dialoguePointer = new DialoguePointer();
+        public DialoguePointer DefaultExit = new DialoguePointer();
+        public List<DialogueChoice> Choices;
+        public bool HasEnded { get; private set; }
+
         private int index = 0;
 
         public Dialogue(int choiceAmount) 
         {
-            Choices = new List<DialogueOption>();
+            Choices = new List<DialogueChoice>();
             for (int i = 0; i < choiceAmount; i++)
-                Choices.Add(new DialogueOption());
+                Choices.Add(new DialogueChoice());
         }
 
         public Dialogue()
         {
-            Choices = new List<DialogueOption>();
+            Choices = new List<DialogueChoice>();
         }
 
-        public DialogueOption GetChoice(int index) 
+        public DialoguePointer GetChoice(int index) 
         {
             return Choices[index];
         }
@@ -44,21 +48,21 @@ namespace DaScript
             if (index > Choices.Count)
                 if (createIfNotExist)
                 {
-                    DialogueOption newOption = new DialogueOption();
-                    newOption.Set(text, next);
+                    DialogueChoice newOption = new DialogueChoice();
+                    newOption.SetOption(text, next);
                 }
 
-            DialogueOption option = Choices[index++];
-            option.Set(text, next);
+            DialogueChoice option = Choices[index++];
+            option.SetOption(text, next);
         }
 
         /// <summary>
         /// Sets the name of the node that follows if no choices are available
         /// </summary>
         /// <param name="value"></param>
-        public void SetNext(string value, DialogueExitMode exitMode) 
+        public void SetNext(string value) 
         {
-            dialoguePointer.Set(value, exitMode);
+            DefaultExit.SetNext(value);
         }
 
         /// <summary>
@@ -67,62 +71,64 @@ namespace DaScript
         public void Reset() 
         {
             index = 0;
-            Text = "";
-            dialoguePointer.Reset();
+            Text = null;
+            DefaultExit.Reset();
 
-            foreach (DialogueOption choice in Choices)
+            foreach (DialogueChoice choice in Choices)
                 choice.Reset();
         }
+
+        public void End() 
+        {
+            DialogueEndEventHandler?.Invoke();
+        }
     }
-    public class DialogueOption
+    public class DialogueChoice : DialoguePointer
     {
-        public bool HasInfo { get { return !string.IsNullOrEmpty(Text); } }
+        public override bool HasInfo { get { return Text != null && Next != null; } }
 
         /// <summary>
         /// The Displayed Text in the choice box
         /// </summary>
         public string Text { get; private set; }
 
+        public void SetOption(string text, string next)
+        {
+            Text = text;
+            SetNext(next);
+        }
+
+        public override void Reset()
+        {
+            base.Reset();
+            Text = null;
+        }
+    }
+
+    public class DialoguePointer
+    {
+        public virtual bool HasInfo { get { return Next != null; } }
         /// <summary>
         /// The name of the node to visist after this choice was picked
         /// </summary>
-        public string Next { get; private set; }
+        public string Next { get; protected set; } = null;
 
-        public void Set(string text, string next)
-        {
-            Text = text;
-            Next = next;
-        }
-
-        public void Reset() 
-        { 
-            Text = "";
-            Next = "";
-        }
-    }
-
-    public class DialoguePointer 
-    {
-        public DialogueExitMode ExitMode { get; private set; }
-        public string Next { get; private set; } = null;
-
-        public void Set(string next, DialogueExitMode exitMode) 
+        public void SetNext(string next) 
         {
             Next = next;
-            ExitMode = exitMode;
         }
 
-        public void Reset() 
+        public virtual void Reset() 
         {
-            ExitMode = DialogueExitMode.INVALID;
             Next = null;
         }
     }
-
+    
     public enum DialogueExitMode 
     {
         INVALID,
         End,
         Running
     }
+
 }

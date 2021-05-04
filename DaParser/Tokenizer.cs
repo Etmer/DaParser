@@ -7,7 +7,8 @@ namespace DaScript
     {
         private const char STRING_DELIMETER = '\'';
         private const char EQUALSIGN = '=';
-        private const char ARROW = '>';
+        private const char ARROWRIGHT = '>';
+        private const char ARROWLEFT = '<';
 
         private string sourceString;
 
@@ -30,6 +31,8 @@ namespace DaScript
             { new TokenMatcher(TokenType.TRANSFER, @"(\=>)" )},
 
             //base
+            
+            { new TokenMatcher(TokenType.STRING, @"(?<=\')(.?)*(?=\')")},
             { new TokenMatcher(TokenType.FUNC, @"\b(function)\b")},
 
             { new TokenMatcher(TokenType.L_BLOCK, @"(\[)")},
@@ -43,7 +46,12 @@ namespace DaScript
             { new TokenMatcher(TokenType.MINUS, @"(\-)")},
             { new TokenMatcher(TokenType.MUL, @"(\*)")},
             { new TokenMatcher(TokenType.DIV, @"(\/)")},
-            { new TokenMatcher(TokenType.STRING, @"(?<=\')(.?)*(?=\')")},
+            { new TokenMatcher(TokenType.SMALLER, @"(\<)")},
+            { new TokenMatcher(TokenType.GREATER, @"(\>)")},
+            { new TokenMatcher(TokenType.SMALLEREQUALS, @"(\<=)")},
+            { new TokenMatcher(TokenType.GREATEREQUALS, @"(\>=)")},
+
+
             { new TokenMatcher(TokenType.EOF, @"(\0)")},
             { new TokenMatcher(TokenType.ID, @"\b((?i)[a-aZ-z_][a-aZ-z0-9_]*)\b")},
             { new TokenMatcher(TokenType.L_PAREN, @"(\()")},
@@ -61,7 +69,8 @@ namespace DaScript
             { "if", TokenType.CONDITION },
             { "else", TokenType.ELSE },
             { "elif", TokenType.ELSEIF },
-            { "program", TokenType.PROGRAM },
+            { "dialogue", TokenType.DIALOGUESCRIPT },
+            { "quest", TokenType.QUESTCRIPT },
             { "end",  TokenType.END },
             { "then",  TokenType.THEN },
             { "string", TokenType.TYPESPEC },
@@ -246,7 +255,17 @@ namespace DaScript
             {
                 itrChar = PeekNextChar(input);
 
-                if (itrChar.Value == EQUALSIGN || itrChar.Value == ARROW)
+                if (itrChar.Value == EQUALSIGN || itrChar.Value == ARROWRIGHT)
+                {
+                    sBuilder.Append(itrChar.Value);
+                    index++;
+                }
+            }
+            else if (itrChar.Value == ARROWLEFT || itrChar.Value == ARROWRIGHT)
+            {
+                itrChar = PeekNextChar(input);
+
+                if (itrChar.Value == EQUALSIGN)
                 {
                     sBuilder.Append(itrChar.Value);
                     index++;

@@ -16,7 +16,8 @@ namespace DaScript
         ELSE, // => else
         ELSEIF, // => elif
         FUNC, // => functions
-        PROGRAM, // => Program start
+        DIALOGUESCRIPT, // => Program start Dialogue
+        QUESTCRIPT, // => Program start Quest
         EMPTY, // => emtpy node
         END, // => Program end
 
@@ -30,6 +31,10 @@ namespace DaScript
         DIV, // => /
         SEMI, // => ;
         COMMA, // => ,
+        GREATER, // => >
+        SMALLER, // => <
+        SMALLEREQUALS, // => <=
+        GREATEREQUALS, // => <=
 
         L_PAREN, // => (
         R_PAREN, // => )

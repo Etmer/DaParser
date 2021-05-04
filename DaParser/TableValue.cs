@@ -32,6 +32,18 @@ namespace DaScript
         }
     }
 
+    public abstract class PrimitiveValue<T> : TableValue<T> where T : IComparable 
+    {
+        public static bool operator <(PrimitiveValue<T> lhs, PrimitiveValue<T> rhs)
+        {
+            return lhs.Value.CompareTo(rhs.Value) == 1;
+        }
+        public static bool operator >(PrimitiveValue<T> lhs, PrimitiveValue<T> rhs) 
+        {
+            return lhs.Value.CompareTo(rhs.Value) == 1;
+        }
+    }
+
 
     public class StringValue : BuiltInType<string>
     {

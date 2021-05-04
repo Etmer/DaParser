@@ -4,9 +4,9 @@ using System.Text;
 
 namespace DaScript
 {
-    public class Script<T> where T : Interpreter, new()
+    public class Script : Interpreter
     {
-        public T Interpreter { get; private set; }
+        public Interpreter Interpreter { get; private set; }
 
         private Lexer lexer;
         private Parser parser;
@@ -17,7 +17,7 @@ namespace DaScript
             lexer = new Lexer();
             parser = new Parser();
             analyzer = new SemanticAnalyzer();
-            Interpreter = new T();
+            Interpreter = new Interpreter();
 
         }
         public void Parse(string input)

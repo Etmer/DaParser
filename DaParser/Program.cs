@@ -5,42 +5,53 @@ namespace DaScript
 {
     class Program
     {
-        private static Script<DialogueInterpreter> script = new Script<DialogueInterpreter>();
+        private static Script script = new Script();
 
         static string s =
-@"        program
-
+@"        dialogue
+                
+                double d = 100;
+                
                 [Start]
-                    {Text} = 'Hello' => 
-                        {Choice} = 'Good day Sir!' => 'Default'
-                        {Choice} = 'Go die in a Pit!' => 'Unfriendly';
+                    {Text = 'Hello'}
+                        {Choice = 'Good *day* Sir!' => 'Default'}
+                        {Choice = 'Go die in a Pit!' => 'Unfriendly'};
                 end
 
                 [Default]
-                    {Text} = 'What can I do for you?' => 
-                        {Choice} = 'I want to buy potions' => 'Buy'
-                        {Choice} = 'I want to sell potions' => 'Sell'
-                        {Choice} = 'Goodbye for now!' => 'End';
+                    {Text = 'What can I do for you?'}
+                        (d < 90) {Choice = 'I want to buy potions' => 'Buy'}
+                        {Choice = 'I want to sell potions' => 'Sell'}
+                        {Choice = 'Goodbye for now!' => 'End'}
+                        {Choice = 'Do the test!' => 'Test'};
+
+                    if(d == 100) then
+                        CallMyCall();
+                    end
+                end
+                
+                [Test]
+                    {Text = 'I am a test and should lead to default' => 'Default'};
                 end
 
 
                 [Sell]
-                    {Text} = 'I will have a look at your wares!' => 
-                        {Choice} = 'I changed my mind since I do not have potions' => 'Default';
+                    {Text = 'I will have a look at your wares!'}
+                        {Choice = 'I changed my mind since I do not have potions' => 'Default'};
                 end  
                 
                 [Buy]
-                    {Text} = 'Have a look!' => 
-                        {Choice} = 'Health Potion' => 'Default'
-                        {Choice} = 'Mana Potion' => 'Default';
+                    {Text = 'Have a look!'}
+                        {Choice = 'Health Potion' => 'Default'}
+                        {Choice = 'Mana Potion' => 'Default'};
                 end  
 
                 [Unfriendly]
-                    {Text} = 'Go away' => end;
+                    {Text = 'Go away' => 'End'};
                 end    
                 
                 [End]
-                    {Text} = 'Goodbye' => end;
+                    {Text = 'Goodbye' => 'End'};
                 end  
         ";
 
@@ -59,14 +70,14 @@ namespace DaScript
             script.Interpreter.Start();
         }
 
-        static void Print(string text, List<DialogueOption> choices) 
+        static void Print(string text, List<DialogueChoice> choices) 
         {
             Console.WriteLine($"Text: {text}");
 
-            foreach (DialogueOption choice in choices)
+            foreach (DialogueChoice choice in choices)
             {
                 if(choice.HasInfo)
-                    Console.WriteLine($"Choice: {choice.Text}");
+                    Console.WriteLine($"\t Choice: {choice.Text}");
             }
         }
 

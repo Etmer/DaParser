@@ -6,7 +6,7 @@ namespace DaScript
 {
     public class Interpreter : ErrorRaiser, IVisitor
     {
-        protected Memory GlobalMemory = new Memory();
+        public Memory GlobalMemory { get; private set; } = new Memory();
         private Node tree = null;
         private SymbolTable symbolTable;
 
@@ -32,7 +32,7 @@ namespace DaScript
 
             switch (node.Token.Type)
             {
-                case TokenType.PROGRAM:
+                case TokenType.DIALOGUESCRIPT:
                     result = Visit_MainNode(node);
                     break;
                 case TokenType.MINUS:
@@ -42,6 +42,10 @@ namespace DaScript
                 case TokenType.MUL:
                 case TokenType.DIV:
                 case TokenType.EQUALS:
+                case TokenType.SMALLER:
+                case TokenType.GREATER:
+                case TokenType.GREATEREQUALS:
+                case TokenType.SMALLEREQUALS:
                     result = Visit_BinOpNode(node);
                     break;
                 case TokenType.NUMBER:
@@ -70,7 +74,7 @@ namespace DaScript
                     break;
                 case TokenType.TEXT_MEMBER:
                     result = Visit_DialogueNode(node);
-                    break;;
+                    break; ;
             }
             return result;
         }
@@ -120,6 +124,16 @@ namespace DaScript
         private object Visit_MainNode(Node node)
         {
             CompundStatementNode program = node as CompundStatementNode;
+
+            switch (node.Token.Type)
+            {
+                case TokenType.DIALOGUESCRIPT:
+                    GlobalMemory["Dialogue"] = new Dialogue(5);
+                    break;
+                case TokenType.QUESTCRIPT:
+                    break;
+            }
+
             foreach (Node statementNode in program.statementList)
             {
                 Visit(statementNode);
@@ -160,6 +174,16 @@ namespace DaScript
                     object rhs = Visit(node.children[1]);
 
                     return lhs.Equals(rhs);
+                case TokenType.SMALLER:
+                    IComparable lhs1 = (IComparable)Visit(node.children[0]);
+                    IComparable rhs1 = (IComparable)Visit(node.children[1]);
+
+                    return lhs1.CompareTo(rhs1) == -1;
+                case TokenType.GREATER:
+                    IComparable lhs2 = (IComparable)Visit(node.children[0]);
+                    IComparable rhs2 = (IComparable)Visit(node.children[1]);
+
+                    return lhs2.CompareTo(rhs2) == 1;
             }
             throw new System.Exception();
         }
@@ -217,7 +241,7 @@ namespace DaScript
 
         private object Visit_DialogueNode(Node node)
         {
-            foreach(Node subNode in node.children)
+            foreach (Node subNode in node.children)
                 Visit_DialogueMember(subNode);
 
             return 1;
@@ -226,11 +250,12 @@ namespace DaScript
         {
             Token token = node.Token;
 
-            switch (token.Type) 
+            switch (token.Type)
             {
                 case TokenType.STRING:
                     return Visit_TextNode(node);
                 case TokenType.CHOICE_MEMBER:
+                case TokenType.L_PAREN:
                     return Visit_TextChoiceNode(node);
                 case TokenType.TRANSFER:
                     return Visit_TransferNode(node);
@@ -252,22 +277,45 @@ namespace DaScript
 
         private object Visit_TextChoiceNode(Node node)
         {
+            Token token = node.Token;
+
+            switch (token.Type) 
+            {
+                case TokenType.CHOICE_MEMBER:
+                    return Visit_NonConditionalChoice(node);
+                case TokenType.L_PAREN:
+                    return Visit_ConditionalChoice(node);
+            }
+            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
+        }
+        private object Visit_ConditionalChoice(Node node)
+        {
+            bool condition = (bool)Visit(node.children[0]);
+            if (condition)
+                return Visit_NonConditionalChoice(node.children[1]);
+
+            return 1;
+        }
+
+        private object Visit_NonConditionalChoice(Node node) 
+        { 
             Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
 
             string text = (string)Visit(node.children[0]);
-            string next = (string)Visit_TransferNode(node.children[1]);
+            string next = (string)Visit_ChoiceTransferNode(node.children[1]);
 
             dialogue.SetOption(text, next);
 
             return 1;
         }
-        private object Visit_ChoiceBlock(Node node)
+
+        private object Visit_TransferContent(Node node)
         {
-            Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
             Token token = node.Token;
 
             switch (token.Type)
             {
+                case TokenType.L_PAREN:
                 case TokenType.MEMBERDELIMITER_LEFT:
                     foreach (Node subNode in node.children)
                         Visit_TextChoiceNode(subNode);
@@ -284,7 +332,29 @@ namespace DaScript
             Node next = node.children[0];
             Token token = next.Token;
 
-            return Visit_ChoiceBlock(next);
+            switch (token.Type) 
+            {
+                case TokenType.L_PAREN:
+                case TokenType.MEMBERDELIMITER_LEFT:
+                    return Visit_TransferContent(next);
+                case TokenType.STRING:
+                    return Visit_DialogueTransferNode(next);
+            }
+            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
+        }
+    
+        private object Visit_DialogueTransferNode(Node node)
+        {
+            Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
+
+            string text = (string)node.GetValue();
+            dialogue.SetNext(text);
+
+            return 1;
+        }
+        private object Visit_ChoiceTransferNode(Node node)
+        {
+            return node.children[0].GetValue();
         }
     }
 }

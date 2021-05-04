@@ -7,6 +7,8 @@ namespace DaScript
     class SemanticAnalyzer : ErrorRaiser
     {
         private SymbolTable currentTable;
+        private bool hasEntryPoint = false;
+        private const string ENTRYBLOCKNAME = "Start";
         public SymbolTable Analyze(Node node)
         {
             currentTable = new SymbolTable();
@@ -15,6 +17,9 @@ namespace DaScript
 
             foreach (Node statement in compundNode.statementList)
                 Visit(statement);
+
+            if (!hasEntryPoint)
+                throw RaiseError(ScriptErrorCode.UNDEFINDED_ENTRYPOINT,node.Token);
 
             return currentTable;
         }
@@ -73,6 +78,11 @@ namespace DaScript
             CompundStatementNode compundNode = node as CompundStatementNode;
 
             SymbolTable table = new SymbolTable(currentTable);
+            string blockName = (string)node.children[0].GetValue();
+
+            if (blockName == ENTRYBLOCKNAME)
+                hasEntryPoint = true;
+
             table.DefineDialogueSymbols();
             currentTable = table;
          
@@ -137,10 +147,16 @@ namespace DaScript
 
         private void Visit_TexMemberNode(Node node)
         {
-        }
+            string name = "Dialogue";
 
-        private void Visit_ChoiceMemberNode(Node node)
-        {
+            if (currentTable.LookUp(name, out ISymbol symbol))
+            {
+                string symbolName = "New_ Dialogue";
+                ISymbol varSymbol = new VariableSymbol(symbolName, symbol);
+
+                if (!currentTable.Define(varSymbol))
+                    throw RaiseError(ScriptErrorCode.ID_ALREADY_DECLARED, node.Token);
+            }
         }
     }
 }
