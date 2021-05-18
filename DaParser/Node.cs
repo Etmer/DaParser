@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using EventScript.Interfaces;
+using EventScript.Literals;
 
-namespace DaScript
+namespace EventScript
 {
     public class Node
     {
@@ -25,13 +26,14 @@ namespace DaScript
             }
         }
 
-        public void Add(Node node) 
+        public void Add(Node node)
         {
             children.Add(node);
         }
 
-        public virtual object GetValue() { return Token.GetValue(); }
+        public virtual object GetValue() { return Token.Value; }
     }
+
     public class ConditionNode : Node
     {
         public ConditionNode(Token token, Node value, Node left, Node right) : base(token)
@@ -67,6 +69,7 @@ namespace DaScript
             Arguments.Add(argument);
         }
     }
+
     public class VariableDeclarationNode : Node
     {
         public Node Variable { get; private set; }

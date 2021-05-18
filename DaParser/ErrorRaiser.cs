@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DaScript
+namespace EventScript
 {
     public class ErrorRaiser
     {

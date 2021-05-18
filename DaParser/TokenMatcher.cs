@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace DaScript
+namespace EventScript
 {
     public class TokenMatcher
         {

@@ -2,36 +2,38 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace DaScript
+namespace EventScript
 {
     public class DialogueTester 
     {
+        private static Script script = new Script();
+
         public event System.Action<string, List<DialogueChoice>> OnStart;
         public event System.Action<string, List<DialogueChoice>> OnUpdate;
         public event System.Action OnEnd;
 
         public System.Action<ErrorCode> OnError;
 
-        private Interpreter interpreter = new Interpreter();
-
-        public void Start() 
+        public void Start(string input) 
         {
-            interpreter.GlobalMemory["CallMyCall"] = (System.Action)End;
+            script.Interpreter.GlobalMemory["CallMyCall"] = (System.Action)End;
 
-            interpreter.Interpret();
-            Dialogue dialogue = interpreter.GlobalMemory["Dialogue"] as Dialogue;
+            script.Parse(input);
 
-            interpreter.EnterBlockNode("Start");
+            script.Interpreter.Interpret();
+            Dialogue dialogue = script.Interpreter.GlobalMemory["Dialogue"] as Dialogue;
+
+            script.Interpreter.EnterBlockNode("Start");
             OnStart?.Invoke(dialogue.Text,dialogue.Choices);
 
             while (true) 
             {
-                string input = Console.ReadLine();
+                string consoleInput = Console.ReadLine();
 
 
                 if (!dialogue.DefaultExit.HasInfo)
                 {
-                    if (int.TryParse(input, out int index))
+                    if (int.TryParse(consoleInput, out int index))
                         SelectChoice(index);
                 }
                 else
@@ -43,30 +45,30 @@ namespace DaScript
 
         public void SelectChoice(int index)
         {
-            Dialogue dialogue = interpreter.GlobalMemory["Dialogue"] as Dialogue;
+            Dialogue dialogue = script.Interpreter.GlobalMemory["Dialogue"] as Dialogue;
 
             DialoguePointer choice = dialogue.GetChoice(index);
             string next = choice.Next;
 
             dialogue.Reset();
-            interpreter.EnterBlockNode(next);
+            script.Interpreter.EnterBlockNode(next);
             Update();
         }
 
         private void SelectDefaultExit()
         {
-            Dialogue dialogue = interpreter.GlobalMemory["Dialogue"] as Dialogue;
+            Dialogue dialogue = script.Interpreter.GlobalMemory["Dialogue"] as Dialogue;
 
             string next = dialogue.DefaultExit.Next;
 
             dialogue.Reset();
-            interpreter.EnterBlockNode(next);
+            script.Interpreter.EnterBlockNode(next);
             Update();
         }
 
         private void Update()
         {
-            Dialogue dialogue = interpreter.GlobalMemory ["Dialogue"] as Dialogue;
+            Dialogue dialogue = script.Interpreter.GlobalMemory ["Dialogue"] as Dialogue;
 
             OnUpdate?.Invoke(dialogue.Text, dialogue.Choices);
         }

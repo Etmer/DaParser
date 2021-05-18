@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
 
-namespace DaScript
+namespace EventScript
 {
     public enum TokenType
     {
@@ -95,11 +92,6 @@ namespace DaScript
         {
             Line = line;
             Column = column;
-        }
-
-        public object GetValue() 
-        {
-            return Value;
         }
     }
 }

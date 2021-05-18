@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 
-namespace DaScript
+namespace EventScript
 {
     public class Tokenizer : ErrorRaiser
     {

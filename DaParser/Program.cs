@@ -1,11 +1,12 @@
-﻿using System;
+﻿using EventScript;
+using System;
 using System.Collections.Generic;
 
 namespace DaScript
 {
     class Program
     {
-        private static Script script = new Script();
+        private static DialogueTester tester = new DialogueTester();
 
         static string s =
 @"        dialogue
@@ -32,6 +33,12 @@ namespace DaScript
                 
                 [Test]
                     {Text = 'I am a test and should lead to default' => 'Default'};
+
+                    if(d == 100) then
+                        d = 90;
+                    else
+                        d = 80;
+                    end
                 end
 
 
@@ -63,11 +70,10 @@ namespace DaScript
 
         static void ProcessSourcestring(string input)
         {
-            script.Interpreter.OnStart += Print;
-            script.Interpreter.OnUpdate += Print;
+            tester.OnStart += Print;
+            tester.OnUpdate += Print;
 
-            script.Parse(input);
-            script.Interpreter.Start();
+            tester.Start(input);
         }
 
         static void Print(string text, List<DialogueChoice> choices) 

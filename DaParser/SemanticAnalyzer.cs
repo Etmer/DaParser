@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace DaScript
+namespace EventScript
 {
     class SemanticAnalyzer : ErrorRaiser
     {

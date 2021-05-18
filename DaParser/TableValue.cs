@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
-namespace DaScript
+namespace EventScript
 {
     public delegate object Function(params object[] arguments); 
   
@@ -87,15 +87,15 @@ namespace DaScript
             MethodInfo method = d.Method;
             functionOwner = d.Target;
 
-            ParameterExpression instance = Expression.Parameter(method.DeclaringType, "Instance");
+            ParameterExpression instance = System.Linq.Expressions.Expression.Parameter(method.DeclaringType, "Instance");
             ParameterExpression[] parameter = method.GetParameters()
                 .Select(p => Expression.Parameter(p.ParameterType, p.Name))
                 .ToArray();
             List<ParameterExpression> allParameters = new List<ParameterExpression>() { instance };
             allParameters.AddRange(parameter);
 
-            LambdaExpression lambda = Expression.Lambda(
-                Expression.Call(instance, method, parameter),
+            LambdaExpression lambda = System.Linq.Expressions.Expression.Lambda(
+                System.Linq.Expressions.Expression.Call(instance, method, parameter),
                 allParameters.ToArray());
 
             Value = lambda.Compile();

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DaScript
+namespace EventScript
 {
     public enum Category 
     {

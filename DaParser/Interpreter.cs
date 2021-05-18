@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace DaScript
+namespace EventScript
 {
     public class Interpreter : ErrorRaiser, IVisitor
     {
