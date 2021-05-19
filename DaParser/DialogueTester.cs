@@ -23,7 +23,7 @@ namespace EventScript
             script.Interpreter.Interpret();
             Dialogue dialogue = script.Interpreter.GlobalMemory["Dialogue"] as Dialogue;
 
-            script.Interpreter.EnterBlockNode("Start");
+            //script.Interpreter.EnterBlockNode("Start");
             OnStart?.Invoke(dialogue.Text,dialogue.Choices);
 
             while (true) 
@@ -75,7 +75,6 @@ namespace EventScript
 
         private void End() 
         {
-            int i = 0;
             OnEnd?.Invoke();
         }
 

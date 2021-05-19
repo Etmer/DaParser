@@ -21,9 +21,10 @@ namespace EventScript
 
     public class Code : Statement
     {
-        public BlockStatement BlockState {get; private set;}
+        public BlockStatement BlockStatement {get; private set;}
 
         public override object Accept(IVisitor visitor) { return visitor.Visit_Program(this); }
+        public void SetBlockStatement(BlockStatement stmt) { BlockStatement = stmt; }
     }
 
     public class BlockStatement : Statement
@@ -37,10 +38,10 @@ namespace EventScript
 
     public class BlockVariable : Statement
     {
-        public string Name { get; private set; }
+        public Literal Name { get; private set; }
         public BlockStatement BlockStatement;
 
-        public BlockVariable(string name) { Name = name; }
+        public BlockVariable(Literal name) { Name = name; }
 
         public override object Accept(IVisitor visitor) { return visitor.Visit_BlockVariable(this); }
         public void SetBlockStatement(BlockStatement blockStmt) { BlockStatement = blockStmt; }
@@ -124,8 +125,43 @@ namespace EventScript
     {
         public object Accept(IVisitor visitor) { return true; }
     }
-    public class False_Expression : IExpression
+
+    public class FALSE_Expression : IExpression
     {
         public object Accept(IVisitor visitor) { return false; }
+    }
+
+    public class DialogueExpression : IExpression
+    {
+        public TextMemberExpression TextExpression { get; private set; }
+        public List<ChoiceMemberExpression> ChoiceExpressionList { get; private set; } = new List<ChoiceMemberExpression>();
+
+        public void SetTextExpression(TextMemberExpression expr) { TextExpression = expr; }
+        public void AddChoiceExpression(ChoiceMemberExpression expr) { ChoiceExpressionList.Add(expr); }
+        public void AddChoiceExpression(List<ChoiceMemberExpression> expr) { if(expr != null) ChoiceExpressionList.AddRange(expr); }
+
+        public object Accept(IVisitor visitor) { return visitor.Visit_DialogueExpression(this); }
+    }
+
+    public abstract class DialogueMember : IExpression
+    {
+        public IExpression Text { get; protected set; } = null;
+        public IExpression Next { get; protected set; } = null;
+        public abstract object Accept(IVisitor visitor);
+
+        public void SetText(IExpression text) { Text = text; }
+        public void SetNext(IExpression next) { Next = next; }
+    }
+
+    public class ChoiceMemberExpression : DialogueMember
+    {
+        public IExpression Condition { get; private set; }
+        public override object Accept(IVisitor visitor) { return visitor.Visit_ChoiceMemberExpression(this); }
+        public void SetCondition(IExpression condition) { Condition = condition; }
+    }
+
+    public class TextMemberExpression : DialogueMember
+    {
+        public override object Accept(IVisitor visitor) { return visitor.Visit_TextMemberExpression(this); }
     }
 }

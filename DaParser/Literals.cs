@@ -7,7 +7,7 @@ namespace EventScript.Literals
     {
         public object value;
 
-        public Literal(object value) 
+        public Literal(object value)
         {
             this.value = value;
         }
@@ -23,6 +23,6 @@ namespace EventScript.Literals
         public string Name { get; private set; }
         public Variable(string name) { Name = name; }
 
-        public object Accept(IVisitor visitor) { return visitor.Visit_Variable(this);  
+        public object Accept(IVisitor visitor) { return visitor.Visit_Variable(this); }
     }
 }

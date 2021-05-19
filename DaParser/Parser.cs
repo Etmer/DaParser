@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using EventScript.Interfaces;
+using EventScript.Literals;
+using EventScript.Utils;
+using System.Collections.Generic;
 
 namespace EventScript
 {
@@ -7,109 +10,187 @@ namespace EventScript
         private Token currentToken;
         private Lexer lexer = null;
 
-        public Node Parse(Lexer lexer)
+        public Code Parse(Lexer lexer)
         {
             this.lexer = lexer;
             return Consume_Program();
         }
 
-        //Consumes a Token until it reaches an EOF token
-        private void Consume(params TokenType[] expectedTypes)
-        {
-            Token token = currentToken;
 
-            foreach (TokenType type in expectedTypes)
-            {
-                if (token.Type == type)
-                {
-                    if (currentToken.Type != TokenType.EOF)
-                    {
-                        currentToken = lexer.GetNextToken();
-                        return;
-                    }
-                    return;
-                }
-            }
-
-            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
-        }
-
-        //Program : DeclarationBlock -> ProgramBlock*
-        private Node Consume_Program()
+        public Code Consume_Program() 
         {
             currentToken = lexer.GetNextToken();
-            CompundStatementNode program = new CompundStatementNode(currentToken);
+            BlockStatement block = new BlockStatement();
             Consume(TokenType.DIALOGUESCRIPT);
 
             while (currentToken.Type != TokenType.EOF)
             {
-                program.Append(Consume_ProgramBlock());
+                block.Append(Consume_ProgramBlock());
             }
+            
             Consume(TokenType.EOF);
-            return program;
+
+            Code code = new Code();
+            code.SetBlockStatement(block);
+
+            return code;
         }
 
-        // Expr : Term(Plus|Minus -> Term)*
-        private Node Consume_Expression()
-        {
-            Node node = Consume_Term();
+        public BlockStatement Consume_BlockStatement() 
+        { 
+            BlockStatement block = new BlockStatement();
+            block.AppendRange(Consume_StatementList());
 
-            while (currentToken.Type == TokenType.PLUS || currentToken.Type == TokenType.MINUS)
-            {
-                Token token = currentToken;
-
-                if (currentToken.Type == TokenType.PLUS)
-                {
-                    Consume(TokenType.PLUS);
-                }
-                if (currentToken.Type == TokenType.MINUS)
-                {
-                    Consume(TokenType.MINUS);
-                }
-
-                node = new Node(token, node, Consume_Term());
-            }
-            return node;
+            return block;
         }
 
-        // Factor : Number|LParen -> Expr -> RParen
-        private Node Consume_Factor()
+        private Statement Consume_ProgramBlock()
         {
             Token token = currentToken;
 
             switch (token.Type)
             {
-                case TokenType.PLUS:
-                case TokenType.MINUS:
-                    Consume(TokenType.MINUS, TokenType.PLUS);
-                    Node value = Consume_Expression();
-                    return new UnaryNode(token, value);
-                case TokenType.NUMBER:
-                    Consume(TokenType.NUMBER);
-                    return new Node(token);
-                case TokenType.L_PAREN:
-                    Consume(TokenType.L_PAREN);
-                    Node expr = Consume_Expression();
-                    Consume(TokenType.R_PAREN);
-                    return expr;
-                case TokenType.ID:
-                    Node var = Consume_Variable();
-                    return var;
-                case TokenType.STRING:
-                    Consume(TokenType.STRING);
-                    Node stringValue = new Node(token);
-                    return stringValue;
-                case TokenType.CALL:
-                    return Consume_FunctionCall();
-
+                case TokenType.TYPESPEC:
+                    return Consume_VariableDeclaration();
+                
+                case TokenType.L_BLOCK:
+                    return Consume_BlockDeclaration();
             }
             throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
 
-        //Term : Factor -> ((Mul|Div) -> Factor)*
-        private Node Consume_Term()
+        private BlockVariable Consume_BlockDeclaration()
         {
-            Node node = Consume_Factor();
+            Token token = currentToken;
+
+            switch (token.Type)
+            {
+                case TokenType.L_BLOCK:
+                    Consume(TokenType.L_BLOCK);
+                    BlockVariable blockVar = new BlockVariable(new Literal(token.Value.ToString()));
+                    Consume(TokenType.ID);
+                    Consume(TokenType.R_BLOCK);
+
+                    blockVar.SetBlockStatement(Consume_BlockStatement());
+
+                    Consume(TokenType.END);
+
+                    return blockVar;
+            }
+            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
+        }
+
+        private List<IExpression> Consume_StatementList()
+        {
+            IExpression stmt = Consume_Statement();
+
+            List<IExpression> statementList = new List<IExpression>() { stmt };
+
+             while (currentToken.Type != TokenType.END && currentToken.Type != TokenType.ELSE && currentToken.Type != TokenType.ELSEIF)
+            {
+                statementList.Add(Consume_Statement());
+            }
+            return statementList;
+        }
+        private IExpression Consume_Statement()
+        {
+            Token token = currentToken;
+            switch (token.Type)
+            {
+                case TokenType.ID:
+                    IExpression stmt = Consume_ID();
+                    Consume(TokenType.SEMI);
+                    return stmt;
+
+                case TokenType.CALL:
+                    FunctionCallExpression call = Consume_FunctionCall();
+                    Consume(TokenType.SEMI);
+                    return call;
+
+                case TokenType.CONDITION:
+                    return Consume_ConditionalExpression();
+
+                case TokenType.MEMBERDELIMITER_LEFT:
+                    return Consume_DialogueExpression();
+            }
+            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
+        }
+
+        private List<ConditionBlock> Consume_ConditionBlockList()
+        {
+            List<ConditionBlock> blockList = new List<ConditionBlock>();
+
+            do
+            {
+                blockList.Add(Consume_ConditionBlock());
+            } while (currentToken.Type != TokenType.END);
+
+            Consume(TokenType.END);
+            return blockList;
+        }
+
+        private ConditionBlock Consume_ConditionBlock()
+        {
+            switch (currentToken.Type) 
+            {
+                case TokenType.CONDITION:
+                case TokenType.ELSEIF:
+                    Consume(TokenType.CONDITION, TokenType.ELSEIF);
+                    IExpression expr = Consume_Expression();
+                    Consume(TokenType.THEN);
+                    BlockStatement blockStmt = Consume_BlockStatement();
+                    return ExpressionFactory.CreateConditionalBlock(expr, blockStmt);
+
+                case TokenType.ELSE:
+                    Consume(TokenType.ELSE);
+                    return ExpressionFactory.CreateConditionalBlock(new TRUE_Expression(), Consume_BlockStatement());
+            }
+            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, currentToken);
+        }
+
+        private ConditionalExpression Consume_ConditionalExpression() 
+        {
+            return ExpressionFactory.CreateConditionalExpression(Consume_ConditionBlockList());
+        }
+
+        private DeclarationStatement Consume_VariableDeclaration() 
+        {
+            Consume(TokenType.TYPESPEC);
+
+            DeclarationStatement declStmt = new DeclarationStatement();
+            string variableName = currentToken.Value.ToString();
+
+            declStmt.SetVariable(new Variable(variableName));
+
+            Consume(TokenType.ID);
+            Consume(TokenType.ASSIGN);
+            IExpression expression = Consume_Expression();
+
+            declStmt.SetExpression(expression);
+
+            Consume(TokenType.SEMI);
+
+            return declStmt;
+        }
+
+        private IExpression Consume_Expression()
+        {
+            IExpression result = Consume_Term();
+
+            while (currentToken.Type == TokenType.PLUS || currentToken.Type == TokenType.MINUS)
+            {
+                Token token = currentToken;
+                Consume(TokenType.PLUS, TokenType.MINUS);
+
+                result = ExpressionFactory.CreateBinary(result, Consume_Term(), token.Type);
+            }
+
+            return result;
+        }
+
+        private IExpression Consume_Term()
+        {
+            IExpression term = Consume_Factor();
 
             Token token = currentToken;
             while (IsOperator())
@@ -138,136 +219,65 @@ namespace EventScript
                         Consume(TokenType.GREATEREQUALS);
                         break;
                 }
-                node = new Node(token, node, Consume_Factor());
+                term = ExpressionFactory.CreateBinary(term,Consume_Factor(), token.Type);
             }
-            return node;
+            return term;
         }
 
-        //Var : Typespec -> Id -> Semi
-        private Node Consume_VariableDeclaration()
-        {
-            Token token = currentToken;
-            Consume(TokenType.TYPESPEC);
-            Node varDecl = new VariableDeclarationNode(token, Consume_ID());
-            Consume(TokenType.SEMI);
-            return varDecl;
-        }
-
-        //FunctionBlock : LBlock -> BlockNode-> RBlock -> CompoundStatement -> End
-        //Create a statementlist for a whole block: [...] => statementList*
-        private Node Consume_BlockDeclaration()
+        private IExpression Consume_Factor()
         {
             Token token = currentToken;
 
             switch (token.Type)
             {
-                case TokenType.L_BLOCK:
-                    Consume(TokenType.L_BLOCK);
-                    BlockNode blockVar = new BlockNode(token, Consume_Variable());
-                    Consume(TokenType.R_BLOCK);
-                    List<Node> blockNodes = Consume_StatementList();
+                case TokenType.PLUS:
+                case TokenType.MINUS:
+                    Consume(TokenType.MINUS, TokenType.PLUS);
+                    return ExpressionFactory.CreateUnary(Consume_Expression(), token.Type);
 
-                    foreach (Node node in blockNodes)
-                        blockVar.Append(node);
+                case TokenType.NUMBER:
+                    Consume(TokenType.NUMBER);
+                    return new Literal(token.Value);
 
-                    Consume(TokenType.END);
+                case TokenType.L_PAREN:
+                    Consume(TokenType.L_PAREN);
+                    IExpression expr = Consume_Expression();
+                    Consume(TokenType.R_PAREN);
+                    return expr;
 
-                    return blockVar;
-            }
-            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
-        }
-
-        //Block : Declaration|FunctionBlock
-        private Node Consume_ProgramBlock()
-        {
-            Token token = currentToken;
-
-            switch (token.Type)
-            {
-                case TokenType.TYPESPEC:
-                    return Consume_VariableDeclaration();
-                case TokenType.L_BLOCK:
-                    return Consume_BlockDeclaration();
-            }
-            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
-        }
-
-        //CompundStatement : Statement*
-        private Node Consume_CompoundStatement()
-        {
-            Token token = currentToken;
-
-            List<Node> nodes = Consume_StatementList();
-            CompundStatementNode compund = new CompundStatementNode(token);
-
-            foreach (Node node in nodes)
-                compund.Append(node);
-
-            return compund;
-        }
-
-        //StatementList : Statement*
-        private List<Node> Consume_StatementList()
-        {
-            Node node = Consume_Statement();
-
-            List<Node> nodes = new List<Node>() { node };
-
-            bool procede = currentToken.Type != TokenType.END;
-
-            while (procede)
-            {
-                switch (currentToken.Type)
-                {
-                    case TokenType.ELSEIF:
-                    case TokenType.ELSE:
-                    case TokenType.END:
-                        procede = false;
-                        break;
-                    default:
-                        nodes.Add(Consume_Statement());
-                        break;
-                }
-            }
-            return nodes;
-        }
-
-        // Statement : VarDecl|Call|(Condition ->
-        private Node Consume_Statement()
-        {
-            Token token = currentToken;
-            switch (token.Type)
-            {
                 case TokenType.ID:
-                    Node IdNode = Consume_ID();
-                    Consume(TokenType.SEMI);
-                    return IdNode;
-                case TokenType.CALL:
-                    Node call = Consume_FunctionCall();
-                    Consume(TokenType.SEMI);
-                    return call;
-                case TokenType.CONDITION:
-                case TokenType.ELSEIF:
-                    Consume(TokenType.CONDITION, TokenType.ELSEIF);
-                    Node value = Consume_Expression();
-                    Node left = Consume_Then();
-                    Node right = Consume_Else();
+                    return Consume_Variable();
 
-                    Node node = new ConditionNode(token, value, left, right);
-                    return node;
-                case TokenType.MEMBERDELIMITER_LEFT:
-                    Node dialogueMember = Consume_DialogueMember();
-                    Consume(TokenType.SEMI);
-                    return dialogueMember;
+                case TokenType.STRING:
+                    Consume(TokenType.STRING);
+                    return ExpressionFactory.CreateStringLiteral(token.Value.ToString());
+
+                case TokenType.CALL:
+                    return Consume_FunctionCall();
+
             }
             throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
 
-        private Node Consume_FunctionCall()
+        private IExpression Consume_ID()
+        {
+            Token token = currentToken;
+            Variable variable = Consume_Variable();
+
+            switch (currentToken.Type)
+            {
+                case TokenType.ASSIGN:
+                    Consume(TokenType.ASSIGN);
+                    return ExpressionFactory.CreateAssignStatement(variable, Consume_Expression());
+            }
+            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
+        }
+
+        private FunctionCallExpression Consume_FunctionCall()
         {
             Token token = currentToken;
 
-            FunctionCallNode call = new FunctionCallNode(token, token.Value.ToString());
+            FunctionCallExpression call = new FunctionCallExpression(token.Value.ToString());
             Consume(TokenType.CALL);
             Consume(TokenType.L_PAREN);
 
@@ -282,180 +292,111 @@ namespace EventScript
             return call;
         }
 
-        private Node Consume_Then()
-        {
-            Token token = currentToken;
-            Consume(TokenType.THEN);
-            return Consume_CompoundStatement();
-        }
-
-        private Node Consume_Else()
-        {
-            Token token = currentToken;
-            switch (token.Type)
-            {
-                case TokenType.ELSEIF:
-                    return Consume_Statement();
-                case TokenType.ELSE:
-                    Consume(TokenType.ELSE);
-                    Node node = Consume_CompoundStatement();
-                    Consume(TokenType.END);
-                    return node;
-                case TokenType.END:
-                    Consume(TokenType.END);
-                    return new Node(token);
-            }
-            throw new System.Exception();
-        }
-
-        private Node Consume_Variable()
+        private Variable Consume_Variable()
         {
             Token token = currentToken;
             Consume(TokenType.ID);
 
-            return new Node(token);
+            return new Variable(token.Value as string);
         }
 
-        //Id 
-        private Node Consume_ID()
+        #region Dialogue
+
+        private DialogueExpression Consume_DialogueExpression()
         {
-            Token token = currentToken;
-            Node variable = Consume_Variable();
-
-            switch (currentToken.Type)
-            {
-                case TokenType.ASSIGN:
-                    token = currentToken;
-                    Consume(TokenType.ASSIGN);
-                    Node assign_right = Consume_Expression();
-                    return new Node(token, variable, assign_right);
-            }
-            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
+            return ExpressionFactory.CreateDialogueExpression(Consume_TextMemberExpression(), Consume_ChoiceList());
         }
 
-        #region DIALOGUE
+        private List<ChoiceMemberExpression> Consume_ChoiceList()
+        {
+         
+            List<ChoiceMemberExpression> result = new List<ChoiceMemberExpression>();
 
-        // This part parses all tokens specifically reserved for the dialogue types:
-        // DialogueText, DialogueChoice
+            while (currentToken.Type != TokenType.SEMI)
+            {
+                result.Add(Consume_ChoiceExpression());
+            }
 
-        private Node Consume_DialogueMember()
+            Consume(TokenType.SEMI);
+            return result;
+        }
+        private TextMemberExpression Consume_TextMemberExpression()
         {
             Consume(TokenType.MEMBERDELIMITER_LEFT);
-            Token token = currentToken;
-
-            switch (token.Type)
-            {
-                case TokenType.TEXT_MEMBER:
-                    return Consume_DialogueText();
-                case TokenType.CHOICE_MEMBER:
-                    return Consume_DialogueDeclaration();
-            }
-            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
-        }
-
-        private Node Consume_DialogueText()
-        {
-            Node dialogue = Consume_DialogueDeclaration();
-            return dialogue;
-        }
-
-        private Node Consume_DialogueDeclaration()
-        {
-            Token token = currentToken;
-            Consume(TokenType.TEXT_MEMBER, TokenType.CHOICE_MEMBER);
+            Consume(TokenType.TEXT_MEMBER);
             Consume(TokenType.ASSIGN);
 
-            Node text = new Node(currentToken);
-
-            Consume(TokenType.STRING);
+            IExpression text = Consume_Factor();
 
             switch (currentToken.Type) 
             {
                 case TokenType.TRANSFER:
-                    Node transfer = Consume_TransferBlock();
+                    Consume(TokenType.TRANSFER);
+                    IExpression next = Consume_Factor();
                     Consume(TokenType.MEMBERDELIMITER_RIGHT);
-                    return new Node(token, text, transfer);
+                    return ExpressionFactory.CreateTextMemberExpression(text, next);
 
                 case TokenType.MEMBERDELIMITER_RIGHT:
                     Consume(TokenType.MEMBERDELIMITER_RIGHT);
-                    Node block = new Node(token, text);
-
-                    while (currentToken.Type != TokenType.SEMI)
-                        block.Add(Consume_ChoiceStatement());
-
-                    return block;
+                    return ExpressionFactory.CreateTextMemberExpression(text, null);
             }
 
             throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, currentToken);
         }
 
-
-        private Node Consume_TransferBlock() 
+        private ChoiceMemberExpression Consume_ChoiceExpression() 
         {
-            Token token = currentToken;
-            Consume(TokenType.TRANSFER);
-
-            switch (currentToken.Type) 
-            {
-                case TokenType.STRING:
-                     return new Node(token,Consume_Factor());
-                case TokenType.END:
-                    return new Node(token,Consume_EndDialogueToken());
-
-            }
-
-            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, currentToken);
-        }
-
-        private Node Consume_Choices()
-        {
-            Token token = currentToken;
-
-            Node node = new Node(token);
-
-            while (currentToken.Type != TokenType.SEMI)
-                node.Add(Consume_ChoiceStatement());
-
-            return node;
-        }
-
-        private Node Consume_ChoiceStatement()
-        {
-            Token token = currentToken;
-
-            switch (token.Type)
+            IExpression condition = null;
+             switch (currentToken.Type) 
             {
                 case TokenType.MEMBERDELIMITER_LEFT:
-                    Consume(TokenType.MEMBERDELIMITER_LEFT);
-                    return Consume_DialogueDeclaration();
+                    condition = new TRUE_Expression();
+                    break;
+
                 case TokenType.L_PAREN:
-                    return Consume_ConditionalChoice();
+                    condition = Consume_Expression();
+                    break;
             }
 
-            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
-        }
+            Consume(TokenType.MEMBERDELIMITER_LEFT);
+            Consume(TokenType.CHOICE_MEMBER);
+            Consume(TokenType.ASSIGN);
 
-        private Node Consume_EndDialogueToken() 
-        {
-            Token token = currentToken;
-            Consume(TokenType.END);
+            IExpression text = Consume_Factor();
 
-            return new Node(token);
-        }
+            Consume(TokenType.TRANSFER);
 
-        private Node Consume_ConditionalChoice() 
-        {
-            Token token = currentToken;
+            IExpression next = Consume_Factor();
 
-            Node value = Consume_Expression();
-            Node choice = Consume_ChoiceStatement();
+            Consume(TokenType.MEMBERDELIMITER_RIGHT);
 
-            return new Node(token, value, choice);
+            return ExpressionFactory.CreateChoiceMemberExpression(condition, text, next);
         }
 
         #endregion
 
         #region HelperFunctions
+
+        //Consumes a Token until it reaches an EOF token
+        private void Consume(params TokenType[] expectedTypes)
+        {
+            Token token = currentToken;
+
+            foreach (TokenType type in expectedTypes)
+            {
+                if (token.Type == type)
+                {
+                    if (currentToken.Type != TokenType.EOF)
+                    {
+                        currentToken = lexer.GetNextToken();
+                        return;
+                    }
+                    return;
+                }
+            }
+
+            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
+        }
 
         private bool IsOperator() 
         {
@@ -470,6 +411,5 @@ namespace EventScript
         }
 
         #endregion
-
     }
 }

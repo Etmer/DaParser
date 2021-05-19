@@ -36,7 +36,7 @@ namespace DaScript
 
                     if(d == 100) then
                         d = 90;
-                    else
+                    elif(d == 25) then
                         d = 80;
                     end
                 end

@@ -4,9 +4,9 @@ using System.Text;
  
 namespace EventScript
 {
-    public class Memory
+    public class Environment
     {
-        private Memory parent;
+        private Environment parent;
         private Dictionary<string, object> memory = new Dictionary<string, object>();
 
         public object this[string index]

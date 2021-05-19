@@ -23,11 +23,11 @@ namespace EventScript
         public void Parse(string input)
         {
             lexer.Tokenize(input);
-            Node node = parser.Parse(lexer);
-            SymbolTable table = analyzer.Analyze(node);
+            Code code = parser.Parse(lexer);
+            //SymbolTable table = analyzer.Analyze(node);
 
-            Interpreter.SetSymbolTable(table);
-            Interpreter.SetTree(node);
+            //Interpreter.SetSymbolTable(table);
+            Interpreter.SetCode(code);
         }
     }
 }

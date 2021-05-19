@@ -20,10 +20,10 @@ namespace EventScript
             switch (errorCode)
             {
                 case ScriptErrorCode.ID_NOT_FOUND:
-                    message = $"Semantic Error: Undeclared ID: {token.GetValue()} at {token.Line}.{token.Column}";
+                    message = $"Semantic Error: Undeclared ID: {token.Value} at {token.Line}.{token.Column}";
                     break;
                 case ScriptErrorCode.ID_ALREADY_DECLARED:
-                    message = $"Semantic Error: ID aleady declared: {token.GetValue()} at {token.Line}.{token.Column}";
+                    message = $"Semantic Error: ID aleady declared: {token.Value} at {token.Line}.{token.Column}";
                     break;
                 case ScriptErrorCode.UNEXPECTED_TOKEN:
                     message = $"Parsing Error: Unexpected Token: {token.Type} at {token.Line}.{token.Column}";
