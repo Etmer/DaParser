@@ -7,7 +7,7 @@ namespace EventScript
     public class Environment
     {
         private Environment parent;
-        private Dictionary<string, object> memory = new Dictionary<string, object>();
+        private Dictionary<string, IValue> memory = new Dictionary<string, IValue>();
 
         public object this[string index]
         {
@@ -15,7 +15,7 @@ namespace EventScript
             get { return GetTableValue(index); }
         }
 
-        public void Add(string key, ITableValue value)
+        public void Add(string key, IValue value)
         {
             memory.Add(key, value);
         }
@@ -28,7 +28,7 @@ namespace EventScript
             return true;
         }
 
-        private object GetTableValue(string key) 
+        private IValue GetTableValue(string key) 
         {
             if (memory.ContainsKey(key))
                 return memory[key];
@@ -40,15 +40,15 @@ namespace EventScript
 
         private void CreateTableValueFromObject(string identifier, object obj)
         {
-            object value = null;
+            IValue value = null;
 
             if (obj is Delegate)
             {
                 value = new FunctionValue(obj);
             }
-            else if (obj is CompundStatementNode)
+            else if (obj is BlockStatement)
             {
-                value = new BlockValue(obj as BlockNode);
+                value = new BlockValue(obj as BlockStatement);
             }
             else if(obj is int)
             {
@@ -66,8 +66,8 @@ namespace EventScript
             {
                 value = new BooleanValue(obj);
             }
-            else
-                value = obj;
+            else if(obj is Dialogue)
+                value = obj as Dialogue;
 
 
             if (memory.ContainsKey(identifier))

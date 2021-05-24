@@ -24,7 +24,8 @@ namespace EventScript
         {
             lexer.Tokenize(input);
             Code code = parser.Parse(lexer);
-            //SymbolTable table = analyzer.Analyze(node);
+            analyzer.SetCode(code);
+            analyzer.Visit();
 
             //Interpreter.SetSymbolTable(table);
             Interpreter.SetCode(code);

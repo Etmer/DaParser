@@ -16,14 +16,14 @@ namespace EventScript
 
         public void Start(string input) 
         {
-            script.Interpreter.GlobalMemory["CallMyCall"] = (System.Action)End;
+            Dialogue dialogue = new Dialogue(5);
+            script.Interpreter.GlobalMemory["Dialogue"] = dialogue;
+            script.Interpreter.GlobalMemory["CallMyCall"] = (System.Action<string, string>)End;
 
             script.Parse(input);
-
-            script.Interpreter.Interpret();
-            Dialogue dialogue = script.Interpreter.GlobalMemory["Dialogue"] as Dialogue;
-
-            //script.Interpreter.EnterBlockNode("Start");
+            script.Interpreter.Visit();
+           
+            script.Interpreter.EnterBlockNode("Start");
             OnStart?.Invoke(dialogue.Text,dialogue.Choices);
 
             while (true) 
@@ -73,7 +73,7 @@ namespace EventScript
             OnUpdate?.Invoke(dialogue.Text, dialogue.Choices);
         }
 
-        private void End() 
+        private void End(string s, string s1) 
         {
             OnEnd?.Invoke();
         }

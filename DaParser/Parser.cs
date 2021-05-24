@@ -21,7 +21,7 @@ namespace EventScript
         {
             currentToken = lexer.GetNextToken();
             BlockStatement block = new BlockStatement();
-            Consume(TokenType.DIALOGUESCRIPT);
+            //Consume(TokenType.DIALOGUESCRIPT);
 
             while (currentToken.Type != TokenType.EOF)
             {
@@ -67,7 +67,10 @@ namespace EventScript
             {
                 case TokenType.L_BLOCK:
                     Consume(TokenType.L_BLOCK);
-                    BlockVariable blockVar = new BlockVariable(new Literal(token.Value.ToString()));
+
+                    StringLiteral lit = ExpressionFactory.CreateStringLiteral(currentToken.Value.ToString(), currentToken);
+                    BlockVariable blockVar = new BlockVariable(lit);
+
                     Consume(TokenType.ID);
                     Consume(TokenType.R_BLOCK);
 
@@ -134,33 +137,43 @@ namespace EventScript
             switch (currentToken.Type) 
             {
                 case TokenType.CONDITION:
+                    return CreateBlock(0);
+
                 case TokenType.ELSEIF:
-                    Consume(TokenType.CONDITION, TokenType.ELSEIF);
-                    IExpression expr = Consume_Expression();
-                    Consume(TokenType.THEN);
-                    BlockStatement blockStmt = Consume_BlockStatement();
-                    return ExpressionFactory.CreateConditionalBlock(expr, blockStmt);
+                    return CreateBlock(1);
 
                 case TokenType.ELSE:
                     Consume(TokenType.ELSE);
-                    return ExpressionFactory.CreateConditionalBlock(new TRUE_Expression(), Consume_BlockStatement());
+                    return ExpressionFactory.CreateConditionalBlock(2, new TRUE_Expression(), Consume_BlockStatement(), currentToken);
             }
+
+            ConditionBlock CreateBlock(int precedence) 
+            {
+                Consume(TokenType.CONDITION, TokenType.ELSEIF);
+                IExpression expr = Consume_Expression();
+                Consume(TokenType.THEN);
+                BlockStatement blockStmt = Consume_BlockStatement();
+                return ExpressionFactory.CreateConditionalBlock(0, expr, blockStmt, currentToken);
+            }
+
             throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, currentToken);
         }
 
         private ConditionalExpression Consume_ConditionalExpression() 
         {
-            return ExpressionFactory.CreateConditionalExpression(Consume_ConditionBlockList());
+            return ExpressionFactory.CreateConditionalExpression(Consume_ConditionBlockList(), currentToken);
         }
 
         private DeclarationStatement Consume_VariableDeclaration() 
         {
-            Consume(TokenType.TYPESPEC);
 
             DeclarationStatement declStmt = new DeclarationStatement();
+            string variableType = currentToken.Value.ToString();
+            Consume(TokenType.TYPESPEC);
             string variableName = currentToken.Value.ToString();
 
-            declStmt.SetVariable(new Variable(variableName));
+            declStmt.SetType(variableType);
+            declStmt.SetName(variableName);
 
             Consume(TokenType.ID);
             Consume(TokenType.ASSIGN);
@@ -182,7 +195,7 @@ namespace EventScript
                 Token token = currentToken;
                 Consume(TokenType.PLUS, TokenType.MINUS);
 
-                result = ExpressionFactory.CreateBinary(result, Consume_Term(), token.Type);
+                result = ExpressionFactory.CreateBinary(result, Consume_Term(), token.Type, currentToken);
             }
 
             return result;
@@ -219,7 +232,7 @@ namespace EventScript
                         Consume(TokenType.GREATEREQUALS);
                         break;
                 }
-                term = ExpressionFactory.CreateBinary(term,Consume_Factor(), token.Type);
+                term = ExpressionFactory.CreateBinary(term,Consume_Factor(), token.Type, token);
             }
             return term;
         }
@@ -233,11 +246,11 @@ namespace EventScript
                 case TokenType.PLUS:
                 case TokenType.MINUS:
                     Consume(TokenType.MINUS, TokenType.PLUS);
-                    return ExpressionFactory.CreateUnary(Consume_Expression(), token.Type);
+                    return ExpressionFactory.CreateUnary(Consume_Expression(), token.Type, token);
 
                 case TokenType.NUMBER:
                     Consume(TokenType.NUMBER);
-                    return new Literal(token.Value);
+                    return ExpressionFactory.CreateNumberLiteral(token.Value.ToString(), token);
 
                 case TokenType.L_PAREN:
                     Consume(TokenType.L_PAREN);
@@ -250,7 +263,7 @@ namespace EventScript
 
                 case TokenType.STRING:
                     Consume(TokenType.STRING);
-                    return ExpressionFactory.CreateStringLiteral(token.Value.ToString());
+                    return ExpressionFactory.CreateStringLiteral(token.Value.ToString(), token);
 
                 case TokenType.CALL:
                     return Consume_FunctionCall();
@@ -268,7 +281,7 @@ namespace EventScript
             {
                 case TokenType.ASSIGN:
                     Consume(TokenType.ASSIGN);
-                    return ExpressionFactory.CreateAssignStatement(variable, Consume_Expression());
+                    return ExpressionFactory.CreateAssignStatement(variable, Consume_Expression(), token);
             }
             throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
@@ -304,7 +317,7 @@ namespace EventScript
 
         private DialogueExpression Consume_DialogueExpression()
         {
-            return ExpressionFactory.CreateDialogueExpression(Consume_TextMemberExpression(), Consume_ChoiceList());
+            return ExpressionFactory.CreateDialogueExpression(Consume_TextMemberExpression(), Consume_ChoiceList(), currentToken);
         }
 
         private List<ChoiceMemberExpression> Consume_ChoiceList()
@@ -328,17 +341,19 @@ namespace EventScript
 
             IExpression text = Consume_Factor();
 
-            switch (currentToken.Type) 
+            Token token = currentToken;
+
+            switch (token.Type) 
             {
                 case TokenType.TRANSFER:
                     Consume(TokenType.TRANSFER);
                     IExpression next = Consume_Factor();
                     Consume(TokenType.MEMBERDELIMITER_RIGHT);
-                    return ExpressionFactory.CreateTextMemberExpression(text, next);
+                    return ExpressionFactory.CreateTextMemberExpression(text, next, token);
 
                 case TokenType.MEMBERDELIMITER_RIGHT:
                     Consume(TokenType.MEMBERDELIMITER_RIGHT);
-                    return ExpressionFactory.CreateTextMemberExpression(text, null);
+                    return ExpressionFactory.CreateTextMemberExpression(text, null, token);
             }
 
             throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, currentToken);
@@ -346,8 +361,10 @@ namespace EventScript
 
         private ChoiceMemberExpression Consume_ChoiceExpression() 
         {
+            Token token = currentToken;
             IExpression condition = null;
-             switch (currentToken.Type) 
+
+             switch (token.Type) 
             {
                 case TokenType.MEMBERDELIMITER_LEFT:
                     condition = new TRUE_Expression();
@@ -370,7 +387,7 @@ namespace EventScript
 
             Consume(TokenType.MEMBERDELIMITER_RIGHT);
 
-            return ExpressionFactory.CreateChoiceMemberExpression(condition, text, next);
+            return ExpressionFactory.CreateChoiceMemberExpression(condition, text, next, token);
         }
 
         #endregion

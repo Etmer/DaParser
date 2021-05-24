@@ -15,7 +15,11 @@ namespace EventScript
     {
         public SymbolTable ParentTable { get; private set; }
         private Dictionary<string, ISymbol> symbols = new Dictionary<string, ISymbol>();
-        public SymbolTable() { DefineBuildInTypes(); }
+        public SymbolTable() 
+        {
+            DefineBuildInTypes();
+            DefineDialogueSymbols();
+        }
         public SymbolTable(SymbolTable parent) { ParentTable = parent; }
 
         public bool Define(ISymbol symbol) 

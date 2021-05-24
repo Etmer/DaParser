@@ -9,26 +9,17 @@ namespace EventScript
 {
     public delegate object Function(params object[] arguments); 
   
-    public interface ITableValue
+    public interface IValue
     {  
         object GetValue(List<object> arguments = null);
     }
-    public abstract class TableValue<T> : ITableValue
+    public abstract class TableValue<T> : IValue
     {
         protected T Value;
 
         public virtual object GetValue(List<object> arguments = null)
         {
             return Value;
-        }
-        public override bool Equals(object obj)
-        {
-            ITableValue symbol = obj as ITableValue;
-
-            if (symbol != null)
-                return Value.Equals(symbol.GetValue());
-
-            return Value.Equals(obj);
         }
     }
 
@@ -65,7 +56,7 @@ namespace EventScript
         public BooleanValue() : base() { }
         public BooleanValue(object value) : base(value) { }
     }
-    public class BuiltInType<T> : TableValue<T>
+    public class BuiltInType<T> : PrimitiveValue<T> where T : IComparable
     {
         public BuiltInType() : base() { }
         public BuiltInType(object value) 
@@ -108,16 +99,12 @@ namespace EventScript
         }
     }
 
-    public class BlockValue : TableValue<BlockNode>
+    public class BlockValue : TableValue<BlockStatement>
     {
-        public BlockValue(BlockNode value) 
+        public BlockValue(BlockStatement value) 
         {
             Value = value;
         }
 
-        public BlockNode GetBlock() 
-        {
-            return Value;
-        }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace EventScript
 {
-    public class Dialogue
+    public class Dialogue : IValue
     {
         public event System.Action DialogueEndEventHandler;
 
@@ -79,6 +79,11 @@ namespace EventScript
         public void End() 
         {
             DialogueEndEventHandler?.Invoke();
+        }
+
+        public object GetValue(List<object> arguments = null)
+        {
+            return this;
         }
     }
     public class DialogueChoice : DialoguePointer

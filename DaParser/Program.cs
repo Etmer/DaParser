@@ -9,8 +9,7 @@ namespace DaScript
         private static DialogueTester tester = new DialogueTester();
 
         static string s =
-@"        dialogue
-                
+@"              
                 double d = 100;
                 
                 [Start]
@@ -27,7 +26,7 @@ namespace DaScript
                         {Choice = 'Do the test!' => 'Test'};
 
                     if(d == 100) then
-                        CallMyCall();
+                        CallMyCall('moin', 'tag');
                     end
                 end
                 

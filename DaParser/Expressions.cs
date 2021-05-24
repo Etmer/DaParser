@@ -4,18 +4,26 @@ using System.Collections.Generic;
 
 namespace EventScript
 {
-    public abstract class Statement : IExpression
+    public class NodeBase 
+    {
+        public Token Token { get; private set; }
+        public void SetToken(Token token) { Token = token; }
+    }
+
+    public abstract class Statement : NodeBase, IExpression
     {
         public abstract object Accept(IVisitor visitor);
     }
 
     public class DeclarationStatement : Statement
     {
-        public Variable DeclaredVariable { get; private set; }
+        public string Name { get; private set; }
+        public string Type { get; private set; }
         public IExpression Expression { get; private set; }
         public override object Accept(IVisitor visitor) { return visitor.Visit_DeclarationStatement(this); }
 
-        public void SetVariable(Variable variable) { DeclaredVariable = variable; }
+        public void SetName(string name) { Name = name; }
+        public void SetType(string type) { Type = type; }
         public void SetExpression(IExpression expression) { Expression = expression; }
     }
 
@@ -56,17 +64,19 @@ namespace EventScript
         public void AddConditionBlocks(List<ConditionBlock> blocks) { conditionBlocks.AddRange(blocks); }
     }
 
-    public class ConditionBlock : IExpression
+    public class ConditionBlock : NodeBase, IExpression
     {
+        public int Precedence { get; private set; } = 0;
         public IExpression Condition { get; private set; }
         public BlockStatement BlockStatement { get; private set; }
         
         public object Accept(IVisitor visitor) { return visitor.Visit_ConditionBlock(this); }
         public void SetCondition(IExpression condition) { Condition = condition; }
         public void SetBlockStatement(BlockStatement blockStatement) { BlockStatement = blockStatement; }
+        public void SetPrecedence(int precedence) { Precedence = precedence; }
     }
 
-    public class AssignStatement : IExpression
+    public class AssignStatement : NodeBase, IExpression
     {
         public Variable Variable { get; private set; }
         public IExpression Expression { get; private set; }
@@ -76,7 +86,7 @@ namespace EventScript
         public void SetExpression(IExpression expression) { Expression = expression; }
     }
 
-    public abstract class OperatorExpression
+    public abstract class OperatorExpression : NodeBase
     {
         public TokenType OperatorType { get; private set; }
         public void SetOperatorType(TokenType operatorType) { OperatorType = operatorType; }
@@ -102,7 +112,7 @@ namespace EventScript
 
     }
 
-    public class FunctionCallExpression : IExpression
+    public class FunctionCallExpression : NodeBase, IExpression
     {
         public string Callee;
         public List<IExpression> Arguments = new List<IExpression>();
@@ -117,11 +127,11 @@ namespace EventScript
         }
         public object Accept(IVisitor visitor)
         {
-            return visitor.Visit_FunctionExpression(this);
+            return visitor.Visit_FunctionCallExpression(this);
         }
     }
 
-    public class TRUE_Expression : IExpression
+    public class TRUE_Expression : NodeBase, IExpression
     {
         public object Accept(IVisitor visitor) { return true; }
     }
@@ -131,7 +141,7 @@ namespace EventScript
         public object Accept(IVisitor visitor) { return false; }
     }
 
-    public class DialogueExpression : IExpression
+    public class DialogueExpression : NodeBase, IExpression
     {
         public TextMemberExpression TextExpression { get; private set; }
         public List<ChoiceMemberExpression> ChoiceExpressionList { get; private set; } = new List<ChoiceMemberExpression>();
@@ -143,7 +153,7 @@ namespace EventScript
         public object Accept(IVisitor visitor) { return visitor.Visit_DialogueExpression(this); }
     }
 
-    public abstract class DialogueMember : IExpression
+    public abstract class DialogueMember : NodeBase, IExpression
     {
         public IExpression Text { get; protected set; } = null;
         public IExpression Next { get; protected set; } = null;
