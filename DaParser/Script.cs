@@ -27,7 +27,7 @@ namespace EventScript
             analyzer.SetCode(code);
             analyzer.Visit();
 
-            //Interpreter.SetSymbolTable(table);
+            Interpreter.GlobalMemory["Dialogue"] = new Dialogue(5);
             Interpreter.SetCode(code);
         }
     }
