@@ -57,11 +57,12 @@ namespace EventScript
 
     public class ConditionalExpression : Statement
     {
-        public List<ConditionBlock> conditionBlocks = new List<ConditionBlock>();
+        public ConditionBlock IfBlock { get; set; }
+        public ConditionalExpression ElseBlock { get; set; }
         public override object Accept(IVisitor visitor) { return visitor.Visit_ConditionalExpression(this); }
 
-        public void AddConditionBlock(ConditionBlock block) { conditionBlocks.Add(block); }
-        public void AddConditionBlocks(List<ConditionBlock> blocks) { conditionBlocks.AddRange(blocks); }
+        public void SetIfBlock(ConditionBlock block) { IfBlock = block; }
+        public void SetElseBlock(ConditionalExpression expr) { ElseBlock = expr; }
     }
 
     public class ConditionBlock : NodeBase, IExpression

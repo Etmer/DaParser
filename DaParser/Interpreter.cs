@@ -30,13 +30,11 @@ namespace EventScript
 
         public object Visit_ConditionalExpression(ConditionalExpression expr)
         {
-            foreach (ConditionBlock block in expr.conditionBlocks)
-            {
-                if ((bool)block.Condition.Accept(this)) 
-                {
-                    return block.BlockStatement.Accept(this);
-                }
-            }
+            if ((bool)expr.IfBlock.Accept(this))
+                expr.IfBlock.BlockStatement.Accept(this);
+            else if(expr.ElseBlock != null)
+                expr.ElseBlock.Accept(this);
+
             return 0;
         }
 
@@ -159,7 +157,7 @@ namespace EventScript
 
         public object Visit_ConditionBlock(ConditionBlock condBlock)
         {
-            return condBlock.Accept(this);
+            return condBlock.Condition.Accept(this);
         }
 
         public object Visit_DialogueExpression(DialogueExpression dialogueExpr)

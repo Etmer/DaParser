@@ -13,7 +13,7 @@ namespace EventScript
             UNDEFINDED_ENTRYPOINT
         }
 
-        protected virtual Exception RaiseError(ScriptErrorCode errorCode, Token token) 
+        protected virtual ScriptException RaiseError(ScriptErrorCode errorCode, Token token) 
         {
             string message = "Unknown Error";
 
@@ -35,7 +35,7 @@ namespace EventScript
                     message = $"Semantic Error: No ´block of name \"Start\" found, please define one!";
                     break;
             }
-            return new System.Exception(message);
+            return new ScriptException(message);
         }
     }
 }

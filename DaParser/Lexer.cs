@@ -30,5 +30,7 @@ namespace EventScript
         {
             return tokens[index++];
         }
+
+        public void Reset() { index = 0; }
     }
 }

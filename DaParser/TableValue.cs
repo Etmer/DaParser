@@ -15,7 +15,7 @@ namespace EventScript
     }
     public abstract class TableValue<T> : IValue
     {
-        protected T Value;
+        public T Value { get; protected set; }
 
         public virtual object GetValue(List<object> arguments = null)
         {

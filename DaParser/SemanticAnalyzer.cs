@@ -60,25 +60,13 @@ namespace EventScript
             string name = choiceMember.Next.Accept(this) as string;
 
             if (!currentTable.LookUp(name, out ISymbol symbol))
-                throw RaiseError(ScriptErrorCode.ID_NOT_FOUND, choiceMember.Token);
+                throw RaiseError(ScriptErrorCode.ID_NOT_FOUND, ((NodeBase)choiceMember.Next).Token);
            
             return 0;
         }
 
         public object Visit_ConditionalExpression(ConditionalExpression expr)
         {
-            int currentHighestPrecedence = 0;
-
-            foreach (ConditionBlock block in expr.conditionBlocks) 
-            {
-                if (block.Precedence >= currentHighestPrecedence)
-                {
-                    block.Accept(this);
-                    currentHighestPrecedence = block.Precedence;
-                }
-                else 
-                    throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, block.Token);
-            }
             return 0;
         }
 
@@ -173,7 +161,7 @@ namespace EventScript
                 string name = txtMember.Next.Accept(this) as string;
 
                 if (!currentTable.LookUp(name, out ISymbol symbol))
-                    throw RaiseError(ScriptErrorCode.ID_NOT_FOUND, txtMember.Token);
+                    throw RaiseError(ScriptErrorCode.ID_NOT_FOUND, ((NodeBase)txtMember.Next).Token);
             }
             return 0;
         }

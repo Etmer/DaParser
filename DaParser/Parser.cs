@@ -33,6 +33,7 @@ namespace EventScript
             Code code = new Code();
             code.SetBlockStatement(block);
 
+            lexer.Reset();
             return code;
         }
 
@@ -119,49 +120,44 @@ namespace EventScript
             throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
 
-        private List<ConditionBlock> Consume_ConditionBlockList()
-        {
-            List<ConditionBlock> blockList = new List<ConditionBlock>();
-
-            do
-            {
-                blockList.Add(Consume_ConditionBlock());
-            } while (currentToken.Type != TokenType.END);
-
-            Consume(TokenType.END);
-            return blockList;
-        }
-
         private ConditionBlock Consume_ConditionBlock()
         {
-            switch (currentToken.Type) 
-            {
-                case TokenType.CONDITION:
-                    return CreateBlock(0);
-
-                case TokenType.ELSEIF:
-                    return CreateBlock(1);
-
-                case TokenType.ELSE:
-                    Consume(TokenType.ELSE);
-                    return ExpressionFactory.CreateConditionalBlock(2, new TRUE_Expression(), Consume_BlockStatement(), currentToken);
-            }
-
-            ConditionBlock CreateBlock(int precedence) 
-            {
-                Consume(TokenType.CONDITION, TokenType.ELSEIF);
-                IExpression expr = Consume_Expression();
-                Consume(TokenType.THEN);
-                BlockStatement blockStmt = Consume_BlockStatement();
-                return ExpressionFactory.CreateConditionalBlock(0, expr, blockStmt, currentToken);
-            }
-
-            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, currentToken);
+            IExpression expr = Consume_Expression();
+            Consume(TokenType.THEN);
+            BlockStatement blockStmt = Consume_BlockStatement();
+            return ExpressionFactory.CreateConditionalBlock(0, expr, blockStmt, currentToken);
         }
 
-        private ConditionalExpression Consume_ConditionalExpression() 
+        private ConditionalExpression Consume_ConditionalExpression()
         {
-            return ExpressionFactory.CreateConditionalExpression(Consume_ConditionBlockList(), currentToken);
+            Token token = currentToken;
+
+            switch (token.Type)
+            {
+                case TokenType.CONDITION:
+                    Consume(TokenType.CONDITION);
+                    return ExpressionFactory.CreateConditionalExpression(Consume_ConditionBlock(), Consume_ConditionalExpression(), currentToken);
+
+                case TokenType.ELSEIF:
+                    Consume(TokenType.ELSEIF);
+                    ConditionBlock block = Consume_ConditionBlock();
+
+                    if (currentToken.Type == TokenType.END) 
+                    {
+                        Consume(TokenType.END);
+                        return ExpressionFactory.CreateConditionalExpression(block, null, currentToken);
+                    }
+                    else 
+                        return ExpressionFactory.CreateConditionalExpression(block, Consume_ConditionalExpression(), currentToken);
+
+                case TokenType.ELSE:
+                    Consume(TokenType.ELSE); 
+                    ConditionBlock elseBlock = ExpressionFactory.CreateConditionalBlock(2, new TRUE_Expression(), Consume_BlockStatement(), currentToken);
+                    ConditionalExpression expr = ExpressionFactory.CreateConditionalExpression(elseBlock, null, currentToken);
+                    Consume(TokenType.END);
+                    return expr;
+            }
+            throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
 
         private DeclarationStatement Consume_VariableDeclaration() 

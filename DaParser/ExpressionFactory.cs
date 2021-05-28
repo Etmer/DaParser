@@ -79,12 +79,13 @@ namespace EventScript.Utils
             return result;
         }
 
-        public static ConditionalExpression CreateConditionalExpression(List<ConditionBlock> conditionBlocks, Token token) 
+        public static ConditionalExpression CreateConditionalExpression(ConditionBlock conditionBlock, ConditionalExpression elseCondition, Token token) 
         {
             ConditionalExpression result = new ConditionalExpression();
             result.SetToken(token);
 
-            result.AddConditionBlocks(conditionBlocks);
+            result.SetIfBlock(conditionBlock);
+            result.SetElseBlock(elseCondition);
             return result;
         }
 

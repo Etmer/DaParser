@@ -6,20 +6,31 @@ namespace DaScript
 {
     class Program
     {
-        static string s =
-@"              
-            [Start]
-                {Text = 'Test one'}
-                    {Choice = 'Test choice one' => 'End'}
-                    {Choice = 'Test choice two' => 'End'}
-                    {Choice = 'Test choice three' => 'End'};
-            end
+       static string s =
+       @"
+                double d = 10;
 
-            [End]
-                 {Text = 'Test one' => 'Start'}; 
-            end
-        ";
+                [Start]
+                    if(d == 10) then
+                        d = 150;
+                    elif(d < 10) then
+                        d = 4;
+                    elif(d == 20)
+                        d = 5;
+                    elif(d > 40) then
+                        d = 6;
+                    end
+                end
+            ";
 
+        public static void Main(string[] args)
+        {
+            Script script = new Script();
+
+            script.Parse(s);
+            script.Interpreter.Visit();
+            script.Interpreter.EnterBlockNode("Start");
+        }
     }
     
 }
