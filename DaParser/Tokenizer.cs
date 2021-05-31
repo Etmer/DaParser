@@ -64,6 +64,8 @@ namespace EventScript
             //Dialogue specific
             { "Text", TokenType.TEXT_MEMBER },
             { "Choice", TokenType.CHOICE_MEMBER },
+            { "Mood", TokenType.MOOD },
+            { "Actor", TokenType.ACTOR },
 
             //base
             { "if", TokenType.CONDITION },

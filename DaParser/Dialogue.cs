@@ -10,6 +10,8 @@ namespace EventScript
         /// The displayed text of the dialogue
         /// </summary>
         public string Text { get; private set; }
+        public string Actor { get; private set; } = null;
+        public string Mood { get; private set; } = null;
 
         public DialoguePointer DefaultExit = new DialoguePointer();
         public List<DialogueChoice> Choices;
@@ -64,6 +66,24 @@ namespace EventScript
         }
 
         /// <summary>
+        /// An Actor is the speaking person in a dialogue
+        /// </summary>
+        /// <param name="name"></param>
+        public void SetActor(string name) 
+        {
+            Actor = name;
+        }
+
+        /// <summary>
+        /// Sets the mood of the actor
+        /// </summary>
+        /// <param name="name"></param>
+        public void SetMood(string mood) 
+        {
+            Mood = mood;
+        }
+
+        /// <summary>
         /// Resets dialogue text and all options
         /// </summary>
         public void Reset() 
@@ -71,6 +91,8 @@ namespace EventScript
             index = 0;
             Text = null;
             DefaultExit.Reset();
+            Mood = null;
+            Actor = null;
 
             foreach (DialogueChoice choice in Choices)
                 choice.Reset();
@@ -86,6 +108,7 @@ namespace EventScript
             return this;
         }
     }
+
     public class DialogueChoice : DialoguePointer
     {
         public override bool HasInfo { get { return Text != null && Next != null; } }
@@ -125,13 +148,6 @@ namespace EventScript
         {
             Next = null;
         }
-    }
-    
-    public enum DialogueExitMode 
-    {
-        INVALID,
-        End,
-        Running
     }
 
 }

@@ -6,7 +6,7 @@ namespace EventScript.Utils
 {
     public class ExpressionFactory
     {
-        public static DialogueExpression CreateDialogueExpression(TextMemberExpression text, List<ChoiceMemberExpression> choiceList, Token token) 
+        public static DialogueExpression CreateDialogueExpression(DialogueTextExpression text, List<IDialogueMember> choiceList, Token token) 
         {
             DialogueExpression expr = new DialogueExpression();
 
@@ -16,9 +16,9 @@ namespace EventScript.Utils
 
             return expr;
         }
-        public static TextMemberExpression CreateTextMemberExpression(IExpression textLiteral, IExpression nextLiteral, Token token)
+        public static DialogueTextExpression CreateTextMemberExpression(IExpression textLiteral, IExpression nextLiteral, Token token)
         {
-            TextMemberExpression expr = new TextMemberExpression();
+            DialogueTextExpression expr = new DialogueTextExpression();
 
             expr.SetText(textLiteral);
             expr.SetNext(nextLiteral);
@@ -26,9 +26,9 @@ namespace EventScript.Utils
 
             return expr;
         }
-        public static ChoiceMemberExpression CreateChoiceMemberExpression(IExpression condition, IExpression textLiteral, IExpression nextLiteral, Token token)
+        public static DialogueChoiceExpression CreateChoiceMemberExpression(IExpression condition, IExpression textLiteral, IExpression nextLiteral, Token token)
         {
-            ChoiceMemberExpression expr = new ChoiceMemberExpression();
+            DialogueChoiceExpression expr = new DialogueChoiceExpression();
 
             expr.SetCondition(condition);
             expr.SetText(textLiteral);
@@ -99,6 +99,21 @@ namespace EventScript.Utils
             result.SetToken(token);
 
             return result;
+        }
+
+        public static DialogueActorExpression CreateDialogueActorExpression(IExpression actor) 
+        {
+            DialogueActorExpression expr = new DialogueActorExpression();
+            expr.SetText(actor);
+
+            return expr;
+        }
+        public static DialogueMoodExpression CreateDialogueMoodExpression(IExpression mood)
+        {
+            DialogueMoodExpression expr = new DialogueMoodExpression();
+            expr.SetText(mood);
+
+            return expr;
         }
 
         public static StringLiteral CreateStringLiteral(string value, Token token) 

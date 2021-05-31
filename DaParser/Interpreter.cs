@@ -164,16 +164,15 @@ namespace EventScript
         {
             dialogueExpr.TextExpression.Accept(this);
 
-            foreach (ChoiceMemberExpression choice in dialogueExpr.ChoiceExpressionList)
+            foreach (IDialogueMember member in dialogueExpr.MemberList)
             {
-                if ((bool)choice.Condition.Accept(this))
-                    choice.Accept(this);
+                    member.Accept(this);
             }
 
             return 0;
         }
 
-        public object Visit_TextMemberExpression(TextMemberExpression txtMember)
+        public object Visit_DialogueTextExpression(DialogueTextExpression txtMember)
         {
             Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
 
@@ -184,11 +183,13 @@ namespace EventScript
             return 0;
         }
 
-        public object Visit_ChoiceMemberExpression(ChoiceMemberExpression choiceMember)
+        public object Visit_DialogueChoiceExpression(DialogueChoiceExpression choiceMember)
         {
-            Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
-
-            dialogue.SetOption((string)choiceMember.Text.Accept(this), (string)choiceMember.Next.Accept(this));
+            if ((bool)choiceMember.Condition.Accept(this))
+            {
+                Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
+                dialogue.SetOption((string)choiceMember.Text.Accept(this), (string)choiceMember.Next.Accept(this));
+            }
 
             return 0;
         }
@@ -206,6 +207,24 @@ namespace EventScript
         public bool Visit_BooleanLiteral(BooleanLiteral lit)
         {
             return lit.GetValue<bool>();
+        }
+
+        public object Visit_DialogueActorExpression(DialogueActorExpression actorExpr)
+        {
+            Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
+
+            dialogue.SetActor((string)actorExpr.Text.Accept(this));
+
+            return 0;
+        }
+
+        public object Visit_DialogueMoodExpression(DialogueMoodExpression moodExpr)
+        {
+            Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
+
+            dialogue.SetMood((string)moodExpr.Text.Accept(this));
+
+            return 0;
         }
     }
 }

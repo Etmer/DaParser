@@ -16,6 +16,7 @@ namespace ScriptLanguageTests
                     {Choice = 'Test choice one' => 'End'}
                     {Choice = 'Test choice two' => 'End'}
                     {Choice = 'Test choice three' => 'End'};
+
             end
 
             [End]
@@ -230,6 +231,42 @@ namespace ScriptLanguageTests
                 return ((DoubleValue)script.Interpreter.GlobalMemory["d"]).Value; 
             }
 
+        }
+
+        #endregion
+
+        #region Test 7
+        private string script_7 = @"
+               
+            [Start]
+                {Text = 'Test one'}
+                {Mood = 'Test Mood'}
+                {Actor = 'Test Actor'}
+                    {Choice = 'Test choice one' => 'End'};
+
+            end
+
+            [End]
+                 {Text = 'Test one' => 'Start'}; 
+            end
+        ";
+
+        [Test]
+        public void Test7()
+        {
+            Script script = new Script();
+
+            script.Parse(script_7);
+            script.Interpreter.Visit();
+
+            script.Interpreter.EnterBlockNode("Start");
+            Dialogue dialogue = (Dialogue)script.Interpreter.GlobalMemory["Dialogue"];
+
+            Assert.IsTrue(dialogue.Text == "Test one");
+            Assert.IsTrue(dialogue.Mood == "Test Mood");
+            Assert.IsTrue(dialogue.Actor == "Test Actor");
+
+            Assert.Pass();
         }
 
         #endregion

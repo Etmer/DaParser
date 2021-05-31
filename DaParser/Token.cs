@@ -52,6 +52,8 @@ namespace EventScript
         TEXT_MEMBER,
         CHOICE_MEMBER,
         TRANSFER, // => arrow(=>)
+        ACTOR,
+        MOOD
 
     }
     public struct Token

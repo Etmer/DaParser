@@ -3,9 +3,13 @@
 namespace EventScript.Interfaces
 {
 
-    public interface IExpression : IVisitable 
+    public interface IDialogueMember : IExpression 
     {
+        IExpression Text { get; }
+        void SetText(IExpression text);
     }
+
+    public interface IExpression : IVisitable { }
 
     public interface IVisitor
     {
@@ -28,8 +32,10 @@ namespace EventScript.Interfaces
 
         //Dialogue
         object Visit_DialogueExpression(DialogueExpression dialogueExpr);
-        object Visit_TextMemberExpression(TextMemberExpression txtMember);
-        object Visit_ChoiceMemberExpression(ChoiceMemberExpression choiceMember);
+        object Visit_DialogueTextExpression(DialogueTextExpression txtMember);
+        object Visit_DialogueChoiceExpression(DialogueChoiceExpression choiceMember);
+        object Visit_DialogueActorExpression(DialogueActorExpression actorExpr);
+        object Visit_DialogueMoodExpression(DialogueMoodExpression moodExpr);
     }
     public interface IVisitable
     {

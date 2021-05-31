@@ -76,7 +76,6 @@ namespace EventScript
         public void SetBlockStatement(BlockStatement blockStatement) { BlockStatement = blockStatement; }
         public void SetPrecedence(int precedence) { Precedence = precedence; }
     }
-
     public class AssignStatement : NodeBase, IExpression
     {
         public Variable Variable { get; private set; }
@@ -144,35 +143,45 @@ namespace EventScript
 
     public class DialogueExpression : NodeBase, IExpression
     {
-        public TextMemberExpression TextExpression { get; private set; }
-        public List<ChoiceMemberExpression> ChoiceExpressionList { get; private set; } = new List<ChoiceMemberExpression>();
+        public DialogueTextExpression TextExpression { get; private set; }
+        public List<IDialogueMember> MemberList { get; private set; } = new List<IDialogueMember>();
 
-        public void SetTextExpression(TextMemberExpression expr) { TextExpression = expr; }
-        public void AddChoiceExpression(ChoiceMemberExpression expr) { ChoiceExpressionList.Add(expr); }
-        public void AddChoiceExpression(List<ChoiceMemberExpression> expr) { if(expr != null) ChoiceExpressionList.AddRange(expr); }
+        public void SetTextExpression(DialogueTextExpression expr) { TextExpression = expr; }
+        public void AddChoiceExpression(IDialogueMember expr) { MemberList.Add(expr); }
+        public void AddChoiceExpression(List<IDialogueMember> expr) { if(expr != null) MemberList.AddRange(expr); }
 
         public object Accept(IVisitor visitor) { return visitor.Visit_DialogueExpression(this); }
     }
 
-    public abstract class DialogueMember : NodeBase, IExpression
+    public abstract class DialogueMemberBase : NodeBase, IDialogueMember
     {
-        public IExpression Text { get; protected set; } = null;
-        public IExpression Next { get; protected set; } = null;
+        public IExpression Text { get; protected set; }
+
         public abstract object Accept(IVisitor visitor);
 
-        public void SetText(IExpression text) { Text = text; }
-        public void SetNext(IExpression next) { Next = next; }
+        public void SetText(IExpression text)  { Text = text; }
     }
 
-    public class ChoiceMemberExpression : DialogueMember
+    public class DialogueChoiceExpression : DialogueTextExpression
     {
         public IExpression Condition { get; private set; }
-        public override object Accept(IVisitor visitor) { return visitor.Visit_ChoiceMemberExpression(this); }
+        public override object Accept(IVisitor visitor) { return visitor.Visit_DialogueChoiceExpression(this); }
         public void SetCondition(IExpression condition) { Condition = condition; }
     }
 
-    public class TextMemberExpression : DialogueMember
+    public class DialogueTextExpression : DialogueMemberBase
     {
-        public override object Accept(IVisitor visitor) { return visitor.Visit_TextMemberExpression(this); }
+        public IExpression Next { get; protected set; } = null;
+        public void SetNext(IExpression next) { Next = next; }
+        public override object Accept(IVisitor visitor) { return visitor.Visit_DialogueTextExpression(this); }
+    }
+
+    public class DialogueActorExpression : DialogueMemberBase
+    {
+        public override object Accept(IVisitor visitor) { return visitor.Visit_DialogueActorExpression(this); }
+    }
+    public class DialogueMoodExpression : DialogueMemberBase
+    {
+        public override object Accept(IVisitor visitor) { return visitor.Visit_DialogueMoodExpression(this); }
     }
 }

@@ -90,10 +90,11 @@ namespace EventScript
 
             List<IExpression> statementList = new List<IExpression>() { stmt };
 
-             while (currentToken.Type != TokenType.END && currentToken.Type != TokenType.ELSE && currentToken.Type != TokenType.ELSEIF)
+             while (currentToken.Type != TokenType.END)
             {
                 statementList.Add(Consume_Statement());
             }
+
             return statementList;
         }
         private IExpression Consume_Statement()
@@ -123,8 +124,15 @@ namespace EventScript
         private ConditionBlock Consume_ConditionBlock()
         {
             IExpression expr = Consume_Expression();
+            BlockStatement blockStmt = new BlockStatement();
+
             Consume(TokenType.THEN);
-            BlockStatement blockStmt = Consume_BlockStatement();
+
+            while (currentToken.Type != TokenType.ELSEIF && currentToken.Type != TokenType.ELSE) 
+            {
+                blockStmt.Append(Consume_Statement());
+            }
+
             return ExpressionFactory.CreateConditionalBlock(0, expr, blockStmt, currentToken);
         }
 
@@ -313,23 +321,23 @@ namespace EventScript
 
         private DialogueExpression Consume_DialogueExpression()
         {
-            return ExpressionFactory.CreateDialogueExpression(Consume_TextMemberExpression(), Consume_ChoiceList(), currentToken);
+            return ExpressionFactory.CreateDialogueExpression(Consume_TextMemberExpression(), Consume_DialogueMemberList(), currentToken);
         }
 
-        private List<ChoiceMemberExpression> Consume_ChoiceList()
+        private List<IDialogueMember> Consume_DialogueMemberList()
         {
-         
-            List<ChoiceMemberExpression> result = new List<ChoiceMemberExpression>();
+            List<IDialogueMember> result = new List<IDialogueMember>();
 
             while (currentToken.Type != TokenType.SEMI)
             {
-                result.Add(Consume_ChoiceExpression());
+               result.Add(Consume_DialogueMember());
             }
 
             Consume(TokenType.SEMI);
             return result;
         }
-        private TextMemberExpression Consume_TextMemberExpression()
+
+        private DialogueTextExpression Consume_TextMemberExpression()
         {
             Consume(TokenType.MEMBERDELIMITER_LEFT);
             Consume(TokenType.TEXT_MEMBER);
@@ -355,23 +363,10 @@ namespace EventScript
             throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, currentToken);
         }
 
-        private ChoiceMemberExpression Consume_ChoiceExpression() 
+        private DialogueChoiceExpression Consume_ChoiceExpression() 
         {
             Token token = currentToken;
-            IExpression condition = null;
-
-             switch (token.Type) 
-            {
-                case TokenType.MEMBERDELIMITER_LEFT:
-                    condition = new TRUE_Expression();
-                    break;
-
-                case TokenType.L_PAREN:
-                    condition = Consume_Expression();
-                    break;
-            }
-
-            Consume(TokenType.MEMBERDELIMITER_LEFT);
+            IExpression condition = new TRUE_Expression(); ;
             Consume(TokenType.CHOICE_MEMBER);
             Consume(TokenType.ASSIGN);
 
@@ -381,9 +376,55 @@ namespace EventScript
 
             IExpression next = Consume_Factor();
 
+            return ExpressionFactory.CreateChoiceMemberExpression(condition, text, next, token);
+        }
+
+        private IDialogueMember Consume_DialogueMember()
+        {
+            Token token = currentToken;
+
+            if (currentToken.Type == TokenType.L_PAREN)
+            {
+                IExpression condition = Consume_Expression();
+                Consume(TokenType.MEMBERDELIMITER_LEFT);
+                Consume(TokenType.CHOICE_MEMBER);
+                Consume(TokenType.ASSIGN);
+
+                IExpression text = Consume_Factor();
+
+                Consume(TokenType.TRANSFER);
+
+                IExpression next = Consume_Factor();
+
+                Consume(TokenType.MEMBERDELIMITER_RIGHT);
+                return ExpressionFactory.CreateChoiceMemberExpression(condition, text, next, token);
+            }
+
+            IDialogueMember dialogueMember = null;
+            Consume(TokenType.MEMBERDELIMITER_LEFT);
+
+            switch (currentToken.Type)
+            {
+                case TokenType.ACTOR:
+                    Consume(TokenType.ACTOR);
+                    Consume(TokenType.ASSIGN);
+                    dialogueMember = ExpressionFactory.CreateDialogueActorExpression(Consume_Factor());
+                    break;
+
+                case TokenType.MOOD:
+                    Consume(TokenType.MOOD);
+                    Consume(TokenType.ASSIGN);
+                    dialogueMember = ExpressionFactory.CreateDialogueMoodExpression(Consume_Factor());
+                    break;
+
+                case TokenType.CHOICE_MEMBER:
+                    dialogueMember = Consume_ChoiceExpression();
+                    break;
+            }
+
             Consume(TokenType.MEMBERDELIMITER_RIGHT);
 
-            return ExpressionFactory.CreateChoiceMemberExpression(condition, text, next, token);
+            return dialogueMember;
         }
 
         #endregion
