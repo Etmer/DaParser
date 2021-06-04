@@ -50,6 +50,7 @@ namespace EventScript
             Define(new ChoiceSymbol("Choice"));
             Define(new TextSymbol("Text"));
             Define(new DialogueSymbol());
+            Define(new BlockSymbol());
         }
 
         /// <summary>
@@ -146,5 +147,9 @@ namespace EventScript
     public class DialogueSymbol : BuiltInSymbol
     {
         public DialogueSymbol() : base("Dialogue") { }
+    }
+    public class BlockSymbol : BuiltInSymbol
+    {
+        public BlockSymbol() : base("Block") { }
     }
 }

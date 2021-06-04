@@ -16,7 +16,6 @@ namespace EventScript
             return Consume_Program();
         }
 
-
         public Code Consume_Program() 
         {
             currentToken = lexer.GetNextToken();
@@ -60,7 +59,7 @@ namespace EventScript
             throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
 
-        private BlockVariable Consume_BlockDeclaration()
+        private DeclarationStatement Consume_BlockDeclaration()
         {
             Token token = currentToken;
 
@@ -69,19 +68,35 @@ namespace EventScript
                 case TokenType.L_BLOCK:
                     Consume(TokenType.L_BLOCK);
 
-                    StringLiteral lit = ExpressionFactory.CreateStringLiteral(currentToken.Value.ToString(), currentToken);
-                    BlockVariable blockVar = new BlockVariable(lit);
+                    BlockDeclarationExpression declStmt = new BlockDeclarationExpression();
+                    string variableType = "Block";
+                    string variableName = currentToken.Value.ToString();
+
+                    StringLiteral lit = ExpressionFactory.CreateStringLiteral(variableName, currentToken);
+
+                    declStmt.SetType(variableType);
+                    declStmt.SetName(variableName);
+
 
                     Consume(TokenType.ID);
                     Consume(TokenType.R_BLOCK);
 
-                    blockVar.SetBlockStatement(Consume_BlockStatement());
+                    BlockStatement blockStmt = Consume_BlockStatement();
+                    blockStmt.Append(Consume_EndBlock());
 
-                    Consume(TokenType.END);
+                    declStmt.SetExpression(blockStmt);
 
-                    return blockVar;
+                    return declStmt;
             }
             throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
+        }
+
+        public EndBlockExpression Consume_EndBlock()
+        {
+            Token token = currentToken;
+            Consume(TokenType.END);
+
+            return ExpressionFactory.CreateEndBlockExpression(token);
         }
 
         private List<IExpression> Consume_StatementList()
@@ -97,6 +112,7 @@ namespace EventScript
 
             return statementList;
         }
+
         private IExpression Consume_Statement()
         {
             Token token = currentToken;
@@ -276,6 +292,15 @@ namespace EventScript
             throw RaiseError(ScriptErrorCode.UNEXPECTED_TOKEN, token);
         }
 
+        private DialogueTerminatorExpression Consume_TerminationExpression() 
+        {
+            Token token = currentToken;
+            Consume(TokenType.END);
+
+            DialogueTerminatorExpression expr = ExpressionFactory.CreateDialogueTerminatorExpression(token);
+            return expr;
+        }
+
         private IExpression Consume_ID()
         {
             Token token = currentToken;
@@ -351,7 +376,13 @@ namespace EventScript
             {
                 case TokenType.TRANSFER:
                     Consume(TokenType.TRANSFER);
-                    IExpression next = Consume_Factor();
+                    IExpression next = null;
+
+                    if (currentToken.Type == TokenType.END)
+                        next = Consume_TerminationExpression();
+                    else
+                        next = Consume_Factor();
+
                     Consume(TokenType.MEMBERDELIMITER_RIGHT);
                     return ExpressionFactory.CreateTextMemberExpression(text, next, token);
 
@@ -374,7 +405,12 @@ namespace EventScript
 
             Consume(TokenType.TRANSFER);
 
-            IExpression next = Consume_Factor();
+            IExpression next = null;
+                 
+            if (currentToken.Type == TokenType.END)
+                next = Consume_TerminationExpression();
+            else
+                next = Consume_Factor();
 
             return ExpressionFactory.CreateChoiceMemberExpression(condition, text, next, token);
         }
@@ -408,13 +444,13 @@ namespace EventScript
                 case TokenType.ACTOR:
                     Consume(TokenType.ACTOR);
                     Consume(TokenType.ASSIGN);
-                    dialogueMember = ExpressionFactory.CreateDialogueActorExpression(Consume_Factor());
+                    dialogueMember = ExpressionFactory.CreateDialogueActorExpression(Consume_Factor(), token);
                     break;
 
                 case TokenType.MOOD:
                     Consume(TokenType.MOOD);
                     Consume(TokenType.ASSIGN);
-                    dialogueMember = ExpressionFactory.CreateDialogueMoodExpression(Consume_Factor());
+                    dialogueMember = ExpressionFactory.CreateDialogueMoodExpression(Consume_Factor(), token);
                     break;
 
                 case TokenType.CHOICE_MEMBER:

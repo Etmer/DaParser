@@ -9,6 +9,10 @@ namespace EventScript
         private Environment parent;
         private Dictionary<string, IValue> memory = new Dictionary<string, IValue>();
 
+
+        public Environment() { }
+        public Environment(Environment parent) { this.parent = parent; }
+
         public object this[string index]
         {
             set { CreateTableValueFromObject(index, value); }
@@ -20,12 +24,14 @@ namespace EventScript
             memory.Add(key, value);
         }
 
-        private bool ContainsKey(string key) 
+        private Environment GetEnvironmentForKey(string key)
         {
-            if (!memory.ContainsKey(key))
-                return parent.ContainsKey(key);
+            if (memory.ContainsKey(key))
+                return this;
+            else if (parent != null)
+                return parent.GetEnvironmentForKey(key);
 
-            return true;
+            return null;
         }
 
         private IValue GetTableValue(string key) 
@@ -43,37 +49,31 @@ namespace EventScript
             IValue value = null;
 
             if (obj is Delegate)
-            {
                 value = new FunctionValue(obj);
-            }
-            else if (obj is BlockStatement)
-            {
-                value = new BlockValue(obj as BlockStatement);
-            }
+            else if (obj is BlockValue)
+                value = obj as BlockValue;
             else if(obj is int)
-            {
                 value = new IntegerValue(obj);
-            }
             else if (obj is string)
-            {
                 value = new StringValue(obj);
-            }
             else if (obj is double)
-            {
                 value = new DoubleValue(obj);
-            }
             else if (obj is bool)
-            {
                 value = new BooleanValue(obj);
-            }
-            else if(obj is Dialogue)
-                value = obj as Dialogue;
+            else if(obj is DialogueData)
+                value = obj as DialogueData;
 
 
-            if (memory.ContainsKey(identifier))
-                memory[identifier] = value;
+            Environment env = GetEnvironmentForKey(identifier);
+
+            if (env == null)
+                env = this;
+
+            if (env.memory.ContainsKey(identifier))
+                env.memory[identifier] = value;
             else
-                memory.Add(identifier, value);
+                env.memory.Add(identifier, value);
         }
+
     }
 }

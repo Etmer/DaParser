@@ -44,17 +44,6 @@ namespace EventScript
         public void AppendRange(List<IExpression> statementList) { Satements.AddRange(statementList); }
     }
 
-    public class BlockVariable : Statement
-    {
-        public Literal Name { get; private set; }
-        public BlockStatement BlockStatement;
-
-        public BlockVariable(Literal name) { Name = name; }
-
-        public override object Accept(IVisitor visitor) { return visitor.Visit_BlockVariable(this); }
-        public void SetBlockStatement(BlockStatement blockStmt) { BlockStatement = blockStmt; }
-    }
-
     public class ConditionalExpression : Statement
     {
         public ConditionBlock IfBlock { get; set; }
@@ -76,6 +65,7 @@ namespace EventScript
         public void SetBlockStatement(BlockStatement blockStatement) { BlockStatement = blockStatement; }
         public void SetPrecedence(int precedence) { Precedence = precedence; }
     }
+
     public class AssignStatement : NodeBase, IExpression
     {
         public Variable Variable { get; private set; }
@@ -156,9 +146,7 @@ namespace EventScript
     public abstract class DialogueMemberBase : NodeBase, IDialogueMember
     {
         public IExpression Text { get; protected set; }
-
         public abstract object Accept(IVisitor visitor);
-
         public void SetText(IExpression text)  { Text = text; }
     }
 
@@ -173,15 +161,36 @@ namespace EventScript
     {
         public IExpression Next { get; protected set; } = null;
         public void SetNext(IExpression next) { Next = next; }
-        public override object Accept(IVisitor visitor) { return visitor.Visit_DialogueTextExpression(this); }
+        public override object Accept(IVisitor visitor) {  return visitor.Visit_DialogueTextExpression(this); }
     }
 
     public class DialogueActorExpression : DialogueMemberBase
     {
         public override object Accept(IVisitor visitor) { return visitor.Visit_DialogueActorExpression(this); }
     }
+
     public class DialogueMoodExpression : DialogueMemberBase
     {
         public override object Accept(IVisitor visitor) { return visitor.Visit_DialogueMoodExpression(this); }
+    }
+
+    public class DialogueTerminatorExpression : NodeBase, IExpression
+    {
+        public object Accept(IVisitor visitor) { return visitor.Visit_DialogueTerminatorExpression(this); }
+    }
+
+    public class EndExpression : NodeBase, IExpression
+    {
+        public object Accept(IVisitor visitor) { return visitor.Visit_EndExpression(this); }
+    }
+
+    public class BlockDeclarationExpression : DeclarationStatement 
+    {
+        public override object Accept(IVisitor visitor) { return visitor.Visit_BlockDeclarationStatement(this); }
+    }
+
+    public class EndBlockExpression : NodeBase, IExpression
+    {
+        public object Accept(IVisitor visitor) { return visitor.Visit_DialogueEndBlockExpression(this); }
     }
 }

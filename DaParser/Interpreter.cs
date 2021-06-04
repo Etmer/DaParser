@@ -5,22 +5,28 @@ using System.Collections.Generic;
 
 namespace EventScript
 {
-    public class Interpreter : ErrorRaiser, IVisitor
+    public partial class Interpreter : ErrorRaiser, IVisitor
     {
-        public Environment GlobalMemory { get; private set; } = new Environment();
+        public Environment Current { get; private set; } = new Environment();
+
+        private Environment last = null;
         private Code code = null;
 
         public void SetCode(Code code) { this.code = code; }
-        public void Visit()
+        public virtual void Visit()
         {
             code.Accept(this);
         }
 
-        public void EnterBlockNode(string input) 
+        public object EnterBlockNode(string input) 
         {
-            BlockValue stmt = GlobalMemory[input] as BlockValue;
+            last = Current;
+            Current = new Environment(last);
 
-            Visit_BlockStatement(stmt.GetValue() as BlockStatement);
+            Current["BlockData"] = new DialogueData();
+            BlockValue stmt = Current[input] as BlockValue;
+
+            return Visit_BlockStatement(stmt.GetValue() as BlockStatement);
         }
 
         public object Visit_Program(Code code)
@@ -101,25 +107,18 @@ namespace EventScript
 
         public object Visit_BlockStatement(BlockStatement block)
         {
+            object obj = null;
+
             foreach (IExpression stmt in block.Satements)
-                stmt.Accept(this);
+                obj = stmt.Accept(this);
 
-            return 0;
-        }
-
-        public object Visit_BlockVariable(BlockVariable blockVar)
-        {
-            string varName = (string)blockVar.Name.Accept(this);
-
-            GlobalMemory[varName] = blockVar.BlockStatement;
-
-            return 0;
+            return obj;
         }
 
         public object Visit_DeclarationStatement(DeclarationStatement declStmt)
         {
             string varName = declStmt.Name;
-            GlobalMemory[varName] = declStmt.Expression.Accept(this);
+            Current[varName] = declStmt.Expression.Accept(this);
 
             return 0;
         }
@@ -127,14 +126,14 @@ namespace EventScript
         public object Visit_AssignStatement(AssignStatement assignStmt)
         {
             string varName = (string)assignStmt.Variable.Name;
-            GlobalMemory[varName] = assignStmt.Expression.Accept(this);
+            Current[varName] = assignStmt.Expression.Accept(this);
 
             return 0;
         }
 
         public object Visit_Variable(Variable variable)
         {
-            return ((IValue)GlobalMemory[variable.Name]).GetValue();
+            return ((IValue)Current[variable.Name]).GetValue();
         }
 
         public object Visit_FunctionCallExpression(FunctionCallExpression func)
@@ -149,7 +148,7 @@ namespace EventScript
                 arguments.Add(value);
             }
 
-            FunctionValue funcValue = (FunctionValue)GlobalMemory[name];
+            FunctionValue funcValue = (FunctionValue)Current[name];
 
 
             return funcValue.GetValue(arguments);
@@ -158,40 +157,6 @@ namespace EventScript
         public object Visit_ConditionBlock(ConditionBlock condBlock)
         {
             return condBlock.Condition.Accept(this);
-        }
-
-        public object Visit_DialogueExpression(DialogueExpression dialogueExpr)
-        {
-            dialogueExpr.TextExpression.Accept(this);
-
-            foreach (IDialogueMember member in dialogueExpr.MemberList)
-            {
-                    member.Accept(this);
-            }
-
-            return 0;
-        }
-
-        public object Visit_DialogueTextExpression(DialogueTextExpression txtMember)
-        {
-            Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
-
-            dialogue.SetText((string)txtMember.Text.Accept(this));
-
-            if (txtMember.Next != null) { dialogue.SetNext((string)txtMember.Next.Accept(this)); }
-
-            return 0;
-        }
-
-        public object Visit_DialogueChoiceExpression(DialogueChoiceExpression choiceMember)
-        {
-            if ((bool)choiceMember.Condition.Accept(this))
-            {
-                Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
-                dialogue.SetOption((string)choiceMember.Text.Accept(this), (string)choiceMember.Next.Accept(this));
-            }
-
-            return 0;
         }
 
         public string Visit_StringLiteral(StringLiteral lit)
@@ -209,20 +174,15 @@ namespace EventScript
             return lit.GetValue<bool>();
         }
 
-        public object Visit_DialogueActorExpression(DialogueActorExpression actorExpr)
+        public object Visit_EndExpression(EndExpression endExpr)
         {
-            Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
-
-            dialogue.SetActor((string)actorExpr.Text.Accept(this));
-
             return 0;
         }
 
-        public object Visit_DialogueMoodExpression(DialogueMoodExpression moodExpr)
+        public object Visit_BlockDeclarationStatement(BlockDeclarationExpression declExpr)
         {
-            Dialogue dialogue = GlobalMemory["Dialogue"] as Dialogue;
-
-            dialogue.SetMood((string)moodExpr.Text.Accept(this));
+            string varName = declExpr.Name;
+            Current[varName] = new BlockValue(declExpr.Expression);
 
             return 0;
         }

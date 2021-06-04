@@ -4,12 +4,12 @@ using System.Collections.Generic;
 
 namespace EventScript
 {
-    class SemanticAnalyzer : ErrorRaiser, IVisitor
+    public partial class SemanticAnalyzer : ErrorRaiser, IVisitor
     {
         private const string ENTRYBLOCKNAME = "Start";
         private bool hasEntryPoint = false;
 
-        private SymbolTable currentTable;
+        protected SymbolTable currentTable;
         private Code code = null;
 
         public void SetCode(Code code) { this.code = code; }
@@ -45,24 +45,10 @@ namespace EventScript
             return 0;
         }
 
-        public object Visit_BlockVariable(BlockVariable blockVar)
-        {
-            return blockVar.BlockStatement.Accept(this);
-        }
         public bool Visit_BooleanLiteral(BooleanLiteral lit)
         {
             Visit_Literal(lit);
             return lit.GetValue<bool>();
-        }
-
-        public object Visit_DialogueChoiceExpression(DialogueChoiceExpression choiceMember)
-    {
-            string name = choiceMember.Next.Accept(this) as string;
-
-            if (!currentTable.LookUp(name, out ISymbol symbol))
-                throw RaiseError(ScriptErrorCode.ID_NOT_FOUND, ((NodeBase)choiceMember.Next).Token);
-           
-            return 0;
         }
 
         public object Visit_ConditionalExpression(ConditionalExpression expr)
@@ -92,16 +78,6 @@ namespace EventScript
             throw RaiseError(ScriptErrorCode.UNDEFINED_SYMBOL, declStmt.Token);
         }
 
-        public object Visit_DialogueExpression(DialogueExpression dialogueExpr)
-        {
-            dialogueExpr.TextExpression.Accept(this);
-
-            foreach (IDialogueMember expr in dialogueExpr.MemberList)
-                expr.Accept(this);
-
-            return 0;
-        }
-
         public object Visit_FunctionCallExpression(FunctionCallExpression func)
         {
             //Functions are added from outside of the environment
@@ -117,33 +93,17 @@ namespace EventScript
 
         public object Visit_Program(Code code)
         {
-            List<IExpression> postChecks = new List<IExpression>();
+            List<IExpression> postSteps = new List<IExpression>();
 
-            foreach (IExpression expr in code.BlockStatement.Satements) 
+            foreach (IExpression expr in code.BlockStatement.Satements)
             {
-                switch (expr) 
-                {
-                    case BlockVariable blockVar:
-                        if (currentTable.LookUp("Dialogue", out ISymbol symbol))
-                        {
-                            string symbolName = (string)blockVar.Name.Accept(this);
-                            ISymbol varSymbol = new VariableSymbol(symbolName, symbol);
-
-                            if (!currentTable.Define(varSymbol))
-                                throw RaiseError(ScriptErrorCode.ID_ALREADY_DECLARED, blockVar.Token);
-
-                            postChecks.Add(blockVar); 
-                        }
-
-                        break;
-                    case DeclarationStatement declStmt:
-                        declStmt.Accept(this);
-                        break;
-                }
+                expr.Accept(this);
+                if(expr is BlockDeclarationExpression)
+                    postSteps.Add(expr);
             }
 
-            foreach (IExpression expr in postChecks)
-                expr.Accept(this);
+            foreach (BlockDeclarationExpression expr in postSteps)
+                expr.Expression.Accept(this);
 
             return 0;
         }
@@ -152,18 +112,6 @@ namespace EventScript
         {
             Visit_Literal(lit);
             return lit.GetValue<string>();
-        }
-
-        public object Visit_DialogueTextExpression(DialogueTextExpression txtMember)
-        {
-            if (txtMember.Next != null)
-            {
-                string name = txtMember.Next.Accept(this) as string;
-
-                if (!currentTable.LookUp(name, out ISymbol symbol))
-                    throw RaiseError(ScriptErrorCode.ID_NOT_FOUND, ((NodeBase)txtMember.Next).Token);
-            }
-            return 0;
         }
 
         public object Visit_UnaryExpression(UnaryExpression expr)
@@ -189,13 +137,21 @@ namespace EventScript
                 throw RaiseError(ScriptErrorCode.UNDEFINED_SYMBOL, lit.Token);
         }
 
-        public object Visit_DialogueActorExpression(DialogueActorExpression actorExpr)
+        public object Visit_EndExpression(EndExpression endExpr)
         {
             return 0;
         }
 
-        public object Visit_DialogueMoodExpression(DialogueMoodExpression moodExpr)
+        public object Visit_BlockDeclarationStatement(BlockDeclarationExpression declExpr)
         {
+            if (currentTable.LookUp("Block", out ISymbol symbol))
+            {
+                string symbolName = (string)declExpr.Name;
+                ISymbol varSymbol = new VariableSymbol(symbolName, symbol);
+
+                if (!currentTable.Define(varSymbol))
+                    throw RaiseError(ScriptErrorCode.ID_ALREADY_DECLARED, declExpr.Token);
+            }
             return 0;
         }
     }

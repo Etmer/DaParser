@@ -1,7 +1,7 @@
 using NUnit.Framework;
 using EventScript;
 
-namespace ScriptLanguageTests
+namespace EventScript.Tests
 {
     public class SimpleTest
     {
@@ -13,13 +13,13 @@ namespace ScriptLanguageTests
                
             [Start]
                 {Text = 'Test one'}
-                    {Choice = 'Test choice one' => 'End'}
-                    {Choice = 'Test choice two' => 'End'}
-                    {Choice = 'Test choice three' => 'End'};
+                    {Choice = 'Test choice one' => 'Test'}
+                    {Choice = 'Test choice two' => 'Test'}
+                    {Choice = 'Test choice three' => 'Test'};
 
             end
 
-            [End]
+            [Test]
                  {Text = 'Test one' => 'Start'}; 
             end
         ";
@@ -27,23 +27,22 @@ namespace ScriptLanguageTests
         [Test]
         public void Test()
         {
-            Script script = new Script();
+            DialogueScript script = new DialogueScript();
 
             script.Parse(script_1);
             script.Interpreter.Visit();
 
-            script.Interpreter.EnterBlockNode("Start");
-            Dialogue dialogue = (Dialogue)script.Interpreter.GlobalMemory["Dialogue"];
+            DialogueData data = (DialogueData)script.Interpreter.EnterBlockNode("Start");
 
-            Assert.IsTrue(dialogue.Text == "Test one");
+            Assert.IsTrue(data.Text == "Test one");
 
-            Assert.IsTrue(dialogue.Choices[0].Text == "Test choice one");
-            Assert.IsTrue(dialogue.Choices[1].Text == "Test choice two");
-            Assert.IsTrue(dialogue.Choices[2].Text == "Test choice three");
+            Assert.IsTrue(data.Choices[0].Text == "Test choice one");
+            Assert.IsTrue(data.Choices[1].Text == "Test choice two");
+            Assert.IsTrue(data.Choices[2].Text == "Test choice three");
 
-            Assert.IsTrue(dialogue.Choices[0].Next == "End");
-            Assert.IsTrue(dialogue.Choices[1].Next == "End");
-            Assert.IsTrue(dialogue.Choices[2].Next == "End");
+            Assert.IsTrue(data.Choices[0].Next == "Test");
+            Assert.IsTrue(data.Choices[1].Next == "Test");
+            Assert.IsTrue(data.Choices[2].Next == "Test");
 
             Assert.Pass();
         }
@@ -63,15 +62,15 @@ namespace ScriptLanguageTests
         [Test]
         public void Test2()
         {
-            Script script = new Script();
+            BehaviourScript script = new BehaviourScript();
 
             script.Parse(script_2);
             script.Interpreter.Visit();
 
-            double d = ((DoubleValue)script.Interpreter.GlobalMemory["d"]).Value;
-            double d1 = ((DoubleValue)script.Interpreter.GlobalMemory["d1"]).Value;
-            double d2 = ((DoubleValue)script.Interpreter.GlobalMemory["d2"]).Value;
-            double d3 = ((DoubleValue)script.Interpreter.GlobalMemory["d3"]).Value;
+            double d = ((DoubleValue)script.Interpreter.Current["d"]).Value;
+            double d1 = ((DoubleValue)script.Interpreter.Current["d1"]).Value;
+            double d2 = ((DoubleValue)script.Interpreter.Current["d2"]).Value;
+            double d3 = ((DoubleValue)script.Interpreter.Current["d3"]).Value;
 
             Assert.IsTrue(d == 103);
             Assert.IsTrue(d1 == 160);
@@ -103,21 +102,20 @@ namespace ScriptLanguageTests
         [Test]
         public void Test3()
         {
-            Script script = new Script();
+            DialogueScript script = new DialogueScript();
 
             script.Parse(script_3);
             script.Interpreter.Visit();
 
-            script.Interpreter.EnterBlockNode("Start");
-            Dialogue dialogue = (Dialogue)script.Interpreter.GlobalMemory["Dialogue"];
+            DialogueData data = (DialogueData)script.Interpreter.EnterBlockNode("Start");
 
-            Assert.IsTrue(dialogue.Text == "Test one");
+            Assert.IsTrue(data.Text == "Test one");
 
-            Assert.IsTrue(dialogue.Choices[0].Text == "Test choice two");
-            Assert.IsTrue(dialogue.Choices[1].Text == "Test choice three");
+            Assert.IsTrue(data.Choices[0].Text == "Test choice two");
+            Assert.IsTrue(data.Choices[1].Text == "Test choice three");
 
-            Assert.IsTrue(dialogue.Choices[0].Next == "End");
-            Assert.IsTrue(dialogue.Choices[1].Next == "End");
+            Assert.IsTrue(data.Choices[0].Next == "End");
+            Assert.IsTrue(data.Choices[1].Next == "End");
 
             Assert.Pass();
         }
@@ -131,13 +129,13 @@ namespace ScriptLanguageTests
             [Start]
                 {Text = 'Test one'}
                     {Choice = 'Test choice one' => 'End'};
-            end
+                end
         ";
 
         [Test]
         public void Test4()
         {
-            Script script = new Script();
+            DialogueScript script = new DialogueScript();
 
             ScriptException ex = Assert.Throws<ScriptException>(() => { script.Parse(script_4); });
             Assert.That(ex.Message, Is.EqualTo("Semantic Error: Undeclared ID: End at 5.31"));
@@ -169,9 +167,9 @@ namespace ScriptLanguageTests
         [Test]
         public void ConditionTest_1()
         {
-            Script script = new Script();
+            BehaviourScript script = new BehaviourScript();
 
-            ScriptException ex =Assert.Throws<ScriptException>(() => script.Parse(script_5));
+            ScriptException ex = Assert.Throws<ScriptException>(() => script.Parse(script_5));
             Assert.That(ex.Message, Is.EqualTo("Parsing Error: Unexpected Token: ELSEIF at 12.18"));
 
             Assert.Pass();
@@ -203,7 +201,7 @@ namespace ScriptLanguageTests
 
             Assert.Pass();
 
-            double GetValueFromInput(string input) 
+            double GetValueFromInput(string input)
             {
                 string script_6 = $@"
                
@@ -224,11 +222,11 @@ namespace ScriptLanguageTests
                 end
             ";
 
-                Script script = new Script();
+                BehaviourScript script = new BehaviourScript();
                 script.Parse(script_6);
                 script.Interpreter.Visit();
                 script.Interpreter.EnterBlockNode("Start");
-                return ((DoubleValue)script.Interpreter.GlobalMemory["d"]).Value; 
+                return ((DoubleValue)script.Interpreter.Current["d"]).Value;
             }
 
         }
@@ -254,22 +252,122 @@ namespace ScriptLanguageTests
         [Test]
         public void Test7()
         {
-            Script script = new Script();
+            DialogueScript script = new DialogueScript();
 
             script.Parse(script_7);
             script.Interpreter.Visit();
 
-            script.Interpreter.EnterBlockNode("Start");
-            Dialogue dialogue = (Dialogue)script.Interpreter.GlobalMemory["Dialogue"];
+            DialogueData data = (DialogueData)script.Interpreter.EnterBlockNode("Start");
 
-            Assert.IsTrue(dialogue.Text == "Test one");
-            Assert.IsTrue(dialogue.Mood == "Test Mood");
-            Assert.IsTrue(dialogue.Actor == "Test Actor");
+            Assert.IsTrue(data.Text == "Test one");
+            Assert.IsTrue(data.Mood == "Test Mood");
+            Assert.IsTrue(data.ActorName == "Test Actor");
 
             Assert.Pass();
         }
 
         #endregion
 
+        #region Test 8
+        private string script_8 = @"
+               
+            [End]
+                 {Text = 'Test one' => end }; 
+            end
+        ";
+
+        [Test]
+        public void Test_DialogueTermination()
+        {
+            DialogueScript script = new DialogueScript();
+
+            script.Parse(script_8);
+            script.Interpreter.Visit();
+
+            script.Interpreter.EnterBlockNode("End");
+
+            Assert.Pass();
+        }
+
+        #endregion
+
+        #region Test 9
+
+        private string script_9 = @"
+               
+            double d = 20;
+            
+            [Start]
+                {Text = 'Start'}
+                    {Choice = 'Choice1' => 'Choice1'}
+                    {Choice = 'Choice2' => 'Choice2'};
+            end
+            
+            [Choice1]  
+                {Text = 'Choice1'}
+                    {Choice = 'Start' => 'Start'}
+                    {Choice = 'Choice2' => 'Choice2'};
+            end
+
+            [Choice2]
+                {Text = 'Choice2'}
+                    {Choice = 'Start' => 'Start'}
+                    {Choice = 'Choice1' => end};
+            end
+        ";
+
+        [Test]
+        public void Test_DialogueHandler()
+        {
+
+            DialogueTestListener listener = new DialogueTestListener();
+            DialogueTestHandler handler = new DialogueTestHandler();
+
+            listener.Register(handler);
+
+            handler.ReadScript(script_9);
+
+            Assert.IsTrue(listener.IsActive == false);
+            handler.Start();
+            Assert.IsTrue(listener.IsActive == true);
+
+            Assert.IsTrue(listener.Text == "Start");
+
+            Assert.IsTrue(listener.ChoiceTexts[0] == "Choice1");
+            Assert.IsTrue(listener.ChoiceTexts[1] == "Choice2");
+
+            Assert.IsTrue(listener.ChoiceTexts[0] == "Choice1");
+            Assert.IsTrue(listener.ChoiceTexts[1] == "Choice2");
+
+            handler.ChooseOption(0);
+
+            Assert.IsTrue(handler.CurrentData.Text == "Choice1");
+
+            Assert.IsTrue(listener.ChoiceTexts[0] == "Start");
+            Assert.IsTrue(listener.ChoiceTexts[1] == "Choice2");
+
+            Assert.IsTrue(listener.ChoiceTexts[0] == "Start");
+            Assert.IsTrue(listener.ChoiceTexts[1] == "Choice2");
+
+            handler.ChooseOption(1);
+
+            Assert.IsTrue(handler.CurrentData.Text == "Choice2");
+
+            Assert.IsTrue(listener.ChoiceTexts[0] == "Start");
+            Assert.IsTrue(listener.ChoiceTexts[1] == "Choice1");
+
+            Assert.IsTrue(listener.ChoiceTexts[0] == "Start");
+            Assert.IsTrue(listener.ChoiceTexts[1] == "Choice1");
+
+            handler.ChooseOption(1);
+
+            Assert.True(listener.IsActive == false);
+            Assert.True(listener.Text == null);
+            Assert.True(listener.ChoiceTexts.Count == 0);
+
+            Assert.Pass();
+        }
+
+        #endregion
     }
 }

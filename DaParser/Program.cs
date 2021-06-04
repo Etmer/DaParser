@@ -25,7 +25,7 @@ namespace DaScript
 
         public static void Main(string[] args)
         {
-            Script script = new Script();
+            BehaviourScript script = new BehaviourScript();
 
             script.Parse(s);
             script.Interpreter.Visit();

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EventScript.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -27,8 +28,14 @@ namespace EventScript
             analyzer.SetCode(code);
             analyzer.Visit();
 
-            Interpreter.GlobalMemory["Dialogue"] = new Dialogue(5);
             Interpreter.SetCode(code);
         }
+    }
+
+    public class BehaviourScript : Script { }
+
+    public class DialogueScript: Script
+    {
+      
     }
 }

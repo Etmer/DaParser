@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EventScript.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -35,27 +36,30 @@ namespace EventScript
         }
     }
 
-
     public class StringValue : BuiltInType<string>
     {
         public StringValue() : base() { }
         public StringValue(object value) : base(value) { }
     }
+
     public class DoubleValue : BuiltInType<double>
     {
         public DoubleValue() : base() { }
         public DoubleValue(object value) : base(value) { }
     }
+
     public class IntegerValue : BuiltInType<int>
     {
         public IntegerValue() : base() { }
         public IntegerValue(object value) : base(value) { }
     }
+
     public class BooleanValue : BuiltInType<bool>
     {
         public BooleanValue() : base() { }
         public BooleanValue(object value) : base(value) { }
     }
+
     public class BuiltInType<T> : PrimitiveValue<T> where T : IComparable
     {
         public BuiltInType() : base() { }
@@ -99,12 +103,18 @@ namespace EventScript
         }
     }
 
-    public class BlockValue : TableValue<BlockStatement>
+    public class BlockValue : IValue
     {
-        public BlockValue(BlockStatement value) 
+        private IExpression expression;
+
+        public BlockValue(IExpression expr) 
         {
-            Value = value;
+            expression = expr;
         }
 
+        public object GetValue(List<object> arguments = null)
+        {
+            return expression;
+        }
     }
 }

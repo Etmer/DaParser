@@ -8,14 +8,16 @@ namespace EventScript.Literals
         public abstract string Type { get; protected set;}
         public object value { get; protected set; }
 
+        public abstract void SetValue(object value);
         public abstract object Accept(IVisitor visitor);
         public T GetValue<T>() { return (T)value; }
 
     }
+
     public class StringLiteral : Literal
     {
         public override string Type { get; protected set; } = "string"; 
-        public StringLiteral(object value) { this.value = value.ToString(); }
+        public override void SetValue(object value) { this.value = value.ToString(); }
 
         public override object Accept(IVisitor visitor)
         {
@@ -26,7 +28,7 @@ namespace EventScript.Literals
     public class NumberLiteral : Literal
     {
         public override string Type { get; protected set; } = "double";
-        public NumberLiteral(object value) { this.value = double.Parse(value.ToString()); }
+        public override void SetValue(object value) { this.value = double.Parse(value.ToString()); }
 
         public override object Accept(IVisitor visitor)
         {
@@ -37,7 +39,7 @@ namespace EventScript.Literals
     public class BooleanLiteral : Literal
     {
         public override string Type { get; protected set; } = "bool";
-        public BooleanLiteral(object value) { this.value = bool.Parse(value.ToString()); }
+        public override void SetValue(object value) { this.value = bool.Parse(value.ToString()); }
 
         public override object Accept(IVisitor visitor)
         {
