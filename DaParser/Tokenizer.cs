@@ -57,7 +57,6 @@ namespace EventScript
             { new TokenMatcher(TokenType.L_PAREN, @"(\()")},
             { new TokenMatcher(TokenType.NUMBER, @"\d+")},
             { new TokenMatcher(TokenType.R_PAREN, @"(\))")},
-            { new TokenMatcher(TokenType.EOF, @"(\!)")},
         };
         private Dictionary<string, TokenType> keywords = new Dictionary<string, TokenType>()
         {
@@ -79,6 +78,7 @@ namespace EventScript
             { "int", TokenType.TYPESPEC },
             { "double", TokenType.TYPESPEC },
             { "bool", TokenType.TYPESPEC },
+            { "?", TokenType.CONDITION },
         };
 
         /// <summary>
@@ -233,7 +233,7 @@ namespace EventScript
             else if (char.IsLetter(itrChar.Value))
             {
                 itrChar = PeekNextChar(sourceString);
-                while (char.IsLetterOrDigit(itrChar.Value))
+                while (itrChar != null && char.IsLetterOrDigit(itrChar.Value))
                 {
                     Advance();
                 }

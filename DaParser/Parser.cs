@@ -349,9 +349,9 @@ namespace EventScript
             return ExpressionFactory.CreateDialogueExpression(Consume_TextMemberExpression(), Consume_DialogueMemberList(), currentToken);
         }
 
-        private List<IDialogueMember> Consume_DialogueMemberList()
+        private List<IExpression> Consume_DialogueMemberList()
         {
-            List<IDialogueMember> result = new List<IDialogueMember>();
+            List<IExpression> result = new List<IExpression>();
 
             while (currentToken.Type != TokenType.SEMI)
             {
@@ -415,25 +415,20 @@ namespace EventScript
             return ExpressionFactory.CreateChoiceMemberExpression(condition, text, next, token);
         }
 
-        private IDialogueMember Consume_DialogueMember()
+        private IExpression Consume_DialogueMember()
         {
             Token token = currentToken;
 
             if (currentToken.Type == TokenType.L_PAREN)
             {
                 IExpression condition = Consume_Expression();
-                Consume(TokenType.MEMBERDELIMITER_LEFT);
-                Consume(TokenType.CHOICE_MEMBER);
-                Consume(TokenType.ASSIGN);
 
-                IExpression text = Consume_Factor();
+                token = currentToken;
+                Consume(TokenType.CONDITION);
 
-                Consume(TokenType.TRANSFER);
+                IExpression member = Consume_DialogueMember();
 
-                IExpression next = Consume_Factor();
-
-                Consume(TokenType.MEMBERDELIMITER_RIGHT);
-                return ExpressionFactory.CreateChoiceMemberExpression(condition, text, next, token);
+                return ExpressionFactory.CreateBinary(condition, member, token.Type, token);
             }
 
             IDialogueMember dialogueMember = null;

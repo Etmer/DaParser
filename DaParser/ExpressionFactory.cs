@@ -6,7 +6,7 @@ namespace EventScript.Utils
 {
     public class ExpressionFactory
     {
-        public static DialogueExpression CreateDialogueExpression(DialogueTextExpression text, List<IDialogueMember> choiceList, Token token) 
+        public static DialogueExpression CreateDialogueExpression(DialogueTextExpression text, List<IExpression> choiceList, Token token) 
         {
             DialogueExpression expr = CreateNode<DialogueExpression>(token);
 

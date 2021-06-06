@@ -3,7 +3,7 @@ using EventScript.Interfaces;
 
 namespace EventScript.Tests
 {
-    class DialogueTestHandler : IDialogueHandler
+    class DialogueTestHandler : IScriptHandler<DialogueData>
     {
         public DialogueData CurrentData { get; private set; }
 
@@ -51,7 +51,7 @@ namespace EventScript.Tests
         public void ReadScript(string script) 
         {
             dialogueScript.Parse(script);
-            dialogueScript.Interpreter.Visit();
+            dialogueScript.Interpreter.PreVisit();
         }
     }
 }

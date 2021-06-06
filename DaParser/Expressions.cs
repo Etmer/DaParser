@@ -134,11 +134,11 @@ namespace EventScript
     public class DialogueExpression : NodeBase, IExpression
     {
         public DialogueTextExpression TextExpression { get; private set; }
-        public List<IDialogueMember> MemberList { get; private set; } = new List<IDialogueMember>();
+        public List<IExpression> MemberList { get; private set; } = new List<IExpression>();
 
         public void SetTextExpression(DialogueTextExpression expr) { TextExpression = expr; }
-        public void AddChoiceExpression(IDialogueMember expr) { MemberList.Add(expr); }
-        public void AddChoiceExpression(List<IDialogueMember> expr) { if(expr != null) MemberList.AddRange(expr); }
+        public void AddChoiceExpression(IExpression expr) { MemberList.Add(expr); }
+        public void AddChoiceExpression(List<IExpression> expr) { if(expr != null) MemberList.AddRange(expr); }
 
         public object Accept(IVisitor visitor) { return visitor.Visit_DialogueExpression(this); }
     }

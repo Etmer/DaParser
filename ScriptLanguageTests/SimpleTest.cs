@@ -30,7 +30,7 @@ namespace EventScript.Tests
             DialogueScript script = new DialogueScript();
 
             script.Parse(script_1);
-            script.Interpreter.Visit();
+            script.Interpreter.PreVisit();
 
             DialogueData data = (DialogueData)script.Interpreter.EnterBlockNode("Start");
 
@@ -65,7 +65,7 @@ namespace EventScript.Tests
             BehaviourScript script = new BehaviourScript();
 
             script.Parse(script_2);
-            script.Interpreter.Visit();
+            script.Interpreter.PreVisit();
 
             double d = ((DoubleValue)script.Interpreter.Current["d"]).Value;
             double d1 = ((DoubleValue)script.Interpreter.Current["d1"]).Value;
@@ -83,29 +83,45 @@ namespace EventScript.Tests
         #endregion
 
         #region Test 3
-        private string script_3 = @"
-               
-            double d = 20;
-            
-            [Start]
-                {Text = 'Test one'}
-                    (d < 20) {Choice = 'Test choice one' => 'End'}
-                    {Choice = 'Test choice two' => 'End'}
-                    {Choice = 'Test choice three' => 'End'};
-            end
 
-            [End]
-                 {Text = 'Test one' => 'Start'}; 
-            end
-        ";
+        string script_3 = @"
+               
+                double d = 21;
+            
+                [Start]
+                    {Text = 'Test one'}
+                        (d < 20) ?  {Choice = 'Test choice one' => 'End'}
+                         {Choice = 'Test choice two' => 'End'}
+                         {Choice = 'Test choice three' => 'End'};
+                    end
+
+                [End]
+                         {Text = 'Test one' => 'Start'}; 
+                end
+                ";
+
+        string script_3_1 = @"
+               
+                 double d = 1;
+            
+                [Start]
+                    {Text = 'Test one'}
+                        (d < 20) ?  {Choice = 'Test choice one' => 'End'}
+                         {Choice = 'Test choice two' => 'End'}
+                         {Choice = 'Test choice three' => 'End'};
+                    end
+
+                [End]
+                         {Text = 'Test one' => 'Start'}; 
+                end";
+
 
         [Test]
         public void Test3()
         {
             DialogueScript script = new DialogueScript();
-
             script.Parse(script_3);
-            script.Interpreter.Visit();
+            script.Interpreter.PreVisit();
 
             DialogueData data = (DialogueData)script.Interpreter.EnterBlockNode("Start");
 
@@ -116,6 +132,22 @@ namespace EventScript.Tests
 
             Assert.IsTrue(data.Choices[0].Next == "End");
             Assert.IsTrue(data.Choices[1].Next == "End");
+
+            DialogueScript script2 = new DialogueScript();
+            script2.Parse(script_3_1);
+            script2.Interpreter.PreVisit();
+
+            data = (DialogueData)script2.Interpreter.EnterBlockNode("Start");
+
+            Assert.IsTrue(data.Text == "Test one");
+
+            Assert.IsTrue(data.Choices[0].Text == "Test choice one");
+            Assert.IsTrue(data.Choices[1].Text == "Test choice two");
+            Assert.IsTrue(data.Choices[2].Text == "Test choice three");
+
+            Assert.IsTrue(data.Choices[0].Next == "End");
+            Assert.IsTrue(data.Choices[1].Next == "End");
+            Assert.IsTrue(data.Choices[2].Next == "End");
 
             Assert.Pass();
         }
@@ -224,7 +256,7 @@ namespace EventScript.Tests
 
                 BehaviourScript script = new BehaviourScript();
                 script.Parse(script_6);
-                script.Interpreter.Visit();
+                script.Interpreter.PreVisit();
                 script.Interpreter.EnterBlockNode("Start");
                 return ((DoubleValue)script.Interpreter.Current["d"]).Value;
             }
@@ -255,7 +287,7 @@ namespace EventScript.Tests
             DialogueScript script = new DialogueScript();
 
             script.Parse(script_7);
-            script.Interpreter.Visit();
+            script.Interpreter.PreVisit();
 
             DialogueData data = (DialogueData)script.Interpreter.EnterBlockNode("Start");
 
@@ -282,7 +314,7 @@ namespace EventScript.Tests
             DialogueScript script = new DialogueScript();
 
             script.Parse(script_8);
-            script.Interpreter.Visit();
+            script.Interpreter.PreVisit();
 
             script.Interpreter.EnterBlockNode("End");
 

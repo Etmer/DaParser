@@ -13,7 +13,7 @@ namespace EventScript
         private Code code = null;
 
         public void SetCode(Code code) { this.code = code; }
-        public virtual void Visit()
+        public virtual void PreVisit()
         {
             code.Accept(this);
         }
@@ -89,6 +89,11 @@ namespace EventScript
                     rhs = (IComparable)expr.Right.Accept(this);
 
                     return lhs.CompareTo(rhs) == 1;
+
+                case TokenType.CONDITION:
+                    if ((bool)expr.Left.Accept(this))
+                        expr.Right.Accept(this);
+                    break;
             }
             return 0;
         }

@@ -26,7 +26,7 @@ namespace EventScript
             lexer.Tokenize(input);
             Code code = parser.Parse(lexer);
             analyzer.SetCode(code);
-            analyzer.Visit();
+            analyzer.PreVisit();
 
             Interpreter.SetCode(code);
         }

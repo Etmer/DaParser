@@ -2,18 +2,29 @@
 
 namespace EventScript.Interfaces
 {
-    public interface IDialogueHandler 
+    public interface IScriptHandler<T>
     {
-        event System.Action<DialogueData> DialogueStartEventHandler;
-        event System.Action<DialogueData> DialogueUpdateEventHandler;
+        event System.Action<T> DialogueStartEventHandler;
+        event System.Action<T> DialogueUpdateEventHandler;
         event System.Action DialogueEndEventHandler;
     }
+
+    public interface IScriptListener<T>
+    {
+        void Register(IScriptHandler<T> handler);
+
+        void Deregister(IScriptHandler<T> handler);
+
+    }
+
     public interface IDialogueMember : IExpression
     {
         IExpression Text { get; }
         void SetText(IExpression text);
     }
+
     public interface IExpression { object Accept(IVisitor visitor); }
+
     public partial interface IVisitor
     {
         object Visit_DialogueExpression(DialogueExpression dialogueExpr);
@@ -24,10 +35,11 @@ namespace EventScript.Interfaces
         object Visit_DialogueTerminatorExpression(DialogueTerminatorExpression terminator);
         object Visit_DialogueEndBlockExpression(EndBlockExpression endBlockStmt);
     }
+
     public partial interface IVisitor
     { 
         //Base
-        void Visit();
+        void PreVisit();
         object Visit_Program(Code code);
         object Visit_ConditionalExpression(ConditionalExpression expr);
         object Visit_BinaryExpression(BinaryExpression expr);
@@ -45,4 +57,5 @@ namespace EventScript.Interfaces
         object Visit_EndExpression(EndExpression endExpr);
 
     }
+
 }

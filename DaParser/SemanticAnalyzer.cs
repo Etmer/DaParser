@@ -14,7 +14,7 @@ namespace EventScript
 
         public void SetCode(Code code) { this.code = code; }
 
-        public void Visit()
+        public void PreVisit()
         {
             currentTable = new SymbolTable();
 

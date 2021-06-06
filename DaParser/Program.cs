@@ -28,7 +28,7 @@ namespace DaScript
             BehaviourScript script = new BehaviourScript();
 
             script.Parse(s);
-            script.Interpreter.Visit();
+            script.Interpreter.PreVisit();
             script.Interpreter.EnterBlockNode("Start");
         }
     }
